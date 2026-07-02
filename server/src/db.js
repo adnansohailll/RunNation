@@ -2,11 +2,15 @@ import pg from 'pg';
 
 const { Pool } = pg;
 
-// DATABASE_URL is used for hosted Postgres (Vercel Postgres, Neon, Supabase, etc.)
-// in production. The discrete DB_* vars remain for local development.
-const pool = process.env.DATABASE_URL
+// A pooled connection string is used for hosted Postgres in production.
+// DATABASE_URL is the generic name; POSTGRES_URL is what Vercel's
+// Supabase/Neon marketplace integrations inject. The discrete DB_* vars
+// remain for local development.
+const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+
+const pool = connectionString
   ? new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString,
       ssl: { rejectUnauthorized: false },
     })
   : new Pool({
