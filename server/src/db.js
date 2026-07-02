@@ -6,7 +6,20 @@ const { Pool } = pg;
 // DATABASE_URL is the generic name; POSTGRES_URL is what Vercel's
 // Supabase/Neon marketplace integrations inject. The discrete DB_* vars
 // remain for local development.
-const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const rawConnectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+
+// pg-connection-string parses `sslmode=require` (which Supabase URLs include)
+// into an empty `ssl: {}` object, which then overwrites our explicit
+// `rejectUnauthorized: false` below during pg's internal config merge —
+// causing "self-signed certificate in certificate chain". Strip it so our
+// explicit ssl option is the only one pg sees.
+const connectionString = rawConnectionString
+  ? (() => {
+      const url = new URL(rawConnectionString);
+      url.searchParams.delete('sslmode');
+      return url.toString();
+    })()
+  : undefined;
 
 const pool = connectionString
   ? new Pool({
