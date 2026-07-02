@@ -1,0 +1,103 @@
+@import 'tailwindcss';
+
+/* ============================================================
+   THEME VARIABLES — swap these to change the entire palette
+   ============================================================ */
+:root {
+  /* Brand — Deep Teal & Champagne */
+  --clr-primary:       #1d4f5c;
+  --clr-primary-dark:  #163a45;
+  --clr-primary-light: #2a6e80;
+  --clr-accent:        #c9963a;
+  --clr-accent-hover:  #a87c30;
+
+  /* Backgrounds */
+  --clr-bg:            #f4f7f8;
+  --clr-surface:       #ffffff;
+  --clr-surface-alt:   #eaf0f2;
+
+  /* Text */
+  --clr-text:          #182830;
+  --clr-text-muted:    #587a86;
+  --clr-text-inverse:  #ffffff;
+
+  /* Borders */
+  --clr-border:        #c8d6db;
+
+  /* Header / Footer */
+  --clr-header-bg:     #112e38;
+  --clr-header-text:   #f0f8fa;
+  --clr-footer-bg:     #0a1d24;
+  --clr-footer-text:   #7aa5b4;
+
+  /* Table */
+  --clr-thead-bg:      #1d4f5c;
+  --clr-thead-text:    #f0f8fa;
+  --clr-row-even:      #ffffff;
+  --clr-row-odd:       #f4f7f8;
+  --clr-row-hover:     #e0ecf0;
+
+  /* Shadows / Radius / Transitions */
+  --shadow-sm:  0 1px 4px rgba(29, 79, 92, 0.08);
+  --shadow-md:  0 4px 18px rgba(29, 79, 92, 0.13);
+  --shadow-lg:  0 8px 32px rgba(29, 79, 92, 0.18);
+  --radius:     10px;
+  --radius-sm:  6px;
+  --transition: 0.25s ease;
+}
+
+/* ---- Dark Mode Overrides ---- */
+[data-theme="dark"] {
+  --clr-bg:           #0d1e25;
+  --clr-surface:      #142830;
+  --clr-surface-alt:  #1b3340;
+
+  --clr-text:         #d6ecf2;
+  --clr-text-muted:   #7aaabb;
+
+  --clr-border:       #1e3d4a;
+
+  --clr-header-bg:    #081419;
+  --clr-header-text:  #d6ecf2;
+  --clr-footer-bg:    #050e13;
+  --clr-footer-text:  #4a7a8a;
+
+  --clr-thead-bg:     #163040;
+  --clr-thead-text:   #d6ecf2;
+  --clr-row-even:     #142830;
+  --clr-row-odd:      #1b3340;
+  --clr-row-hover:    #1f3c4c;
+
+  --shadow-sm:  0 1px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md:  0 4px 18px rgba(0, 0, 0, 0.42);
+  --shadow-lg:  0 8px 32px rgba(0, 0, 0, 0.55);
+}
+
+/* ---- Global Reset & Base ---- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--clr-bg);
+  color: var(--clr-text);
+  line-height: 1.6;
+  transition: background-color var(--transition), color var(--transition);
+  min-height: 100vh;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+img, svg {
+  display: block;
+}
