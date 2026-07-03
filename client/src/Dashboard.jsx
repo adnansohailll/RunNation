@@ -5,6 +5,9 @@ import {
   IconFilter, IconX,
 } from "./icons.jsx";
 import { cellValue, googleMapsUrl } from "./utils.jsx";
+import banner1 from "./assets/images/banner-1.jpg";
+import banner2 from "./assets/images/banner-2.jpg";
+import banner3 from "./assets/images/banner-3.jpg";
 
 /* ---- Day-of-week filter options ---- */
 const WEEKDAYS = [
@@ -18,26 +21,7 @@ const WEEKDAYS = [
 ];
 
 /* ---- Banner slides ---- */
-const SLIDES = [
-  {
-    tag: "Welcome",
-    title: "Track Every Run",
-    subtitle: "Comprehensive metadata for all your runs stored and searchable in one place.",
-    cls: "banner-slide-1",
-  },
-  {
-    tag: "Analytics",
-    title: "Analyze Performance",
-    subtitle: "Dive deep into run statistics, trends, and key metrics at a glance.",
-    cls: "banner-slide-2",
-  },
-  {
-    tag: "Progress",
-    title: "Monitor Your Growth",
-    subtitle: "Watch your numbers improve and celebrate every milestone along the way.",
-    cls: "banner-slide-3",
-  },
-];
+const SLIDES = [banner1, banner2, banner3];
 
 const CARDS_PER_PAGE = 32;
 const HIDDEN_COLS    = new Set(["id", "event_url"]);
@@ -119,17 +103,12 @@ export default function Dashboard() {
     <>
       {/* ====== BANNER ====== */}
       <div className="banner" aria-hidden="true">
-        {SLIDES.map((slide, i) => (
+        {SLIDES.map((src, i) => (
           <div
             key={i}
-            className={`banner-slide ${slide.cls} ${i === activeSlide ? "active" : ""}`}
-          >
-            <div className="banner-content">
-              <span className="banner-tag">{slide.tag}</span>
-              <h2 className="banner-title">{slide.title}</h2>
-              <p className="banner-subtitle">{slide.subtitle}</p>
-            </div>
-          </div>
+            className={`banner-slide ${i === activeSlide ? "active" : ""}`}
+            style={{ backgroundImage: `url(${src})` }}
+          />
         ))}
       </div>
 

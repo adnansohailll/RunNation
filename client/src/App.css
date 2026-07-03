@@ -177,9 +177,8 @@
 .banner-slide {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background-size: cover;
+  background-position: center;
   opacity: 0;
   transition: opacity 1.2s ease;
   pointer-events: none;
@@ -188,56 +187,6 @@
 .banner-slide.active {
   opacity: 1;
   pointer-events: auto;
-}
-
-.banner-slide-1 {
-  background: linear-gradient(135deg, #112e38 0%, #1d4f5c 55%, #c9963a 100%);
-}
-
-.banner-slide-2 {
-  background: linear-gradient(135deg, #0a1d24 0%, #163a45 55%, #a87c30 100%);
-}
-
-.banner-slide-3 {
-  background: linear-gradient(135deg, #0d2830 10%, #2a6e80 55%, #c9963a 100%);
-}
-
-.banner-content {
-  text-align: center;
-  color: #ffffff;
-  padding: 0 24px;
-  max-width: 700px;
-}
-
-.banner-tag {
-  display: inline-block;
-  background-color: rgba(201, 150, 58, 0.2);
-  border: 1px solid rgba(201, 150, 58, 0.5);
-  color: #f0c97a;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  padding: 4px 14px;
-  border-radius: 20px;
-  margin-bottom: 18px;
-}
-
-.banner-title {
-  font-size: 2.8rem;
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -0.5px;
-  margin-bottom: 14px;
-  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
-}
-
-.banner-subtitle {
-  font-size: 1.1rem;
-  opacity: 0.82;
-  max-width: 520px;
-  margin: 0 auto;
-  line-height: 1.65;
 }
 
 /* ==============================================================
@@ -1045,7 +994,6 @@
   .search-input:focus { width: 190px; }
 
   .banner { height: 280px; }
-  .banner-title { font-size: 2rem; }
 
   .footer-inner { flex-direction: column; text-align: center; }
 }
@@ -1055,8 +1003,6 @@
   .brand-name { font-size: 1.05rem; }
   .search-input { width: 120px; }
   .banner { height: 230px; }
-  .banner-title { font-size: 1.55rem; }
-  .banner-subtitle { font-size: 0.9rem; }
   .main { padding: 32px 16px; }
 }
 
