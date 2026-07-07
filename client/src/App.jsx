@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, NavLink } from "react-router-dom";
 import "./App.css";
 import { IconRun, IconSearch, IconSun, IconMoon } from "./icons.jsx";
 
@@ -32,7 +32,12 @@ function App() {
 
           {/* Navigation */}
           <nav className="nav">
-            <button className="nav-link active">Dashboard</button>
+            <NavLink to="/" end className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
+              Dashboard
+            </NavLink>
+            <NavLink to="/map" className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
+              Map
+            </NavLink>
             <a href="#" className="nav-link">Analytics</a>
             <a href="#" className="nav-link">About</a>
           </nav>

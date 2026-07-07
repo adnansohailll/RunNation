@@ -5,6 +5,7 @@ import './index.css'
 import App from './App.jsx'
 import Dashboard from './Dashboard.jsx'
 import RunDetail from './RunDetail.jsx'
+import MapView from './MapView.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -13,6 +14,7 @@ createRoot(document.getElementById('root')).render(
         <Route element={<App />}>
           <Route index element={<Dashboard />} />
           <Route path="run/:id" element={<RunDetail />} />
+          <Route path="map" element={<MapView />} />
         </Route>
       </Routes>
     </BrowserRouter>
