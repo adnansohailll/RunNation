@@ -4,21 +4,10 @@ import {
   IconClock, IconMapPin, IconRoute, IconTerrain, IconUsers, IconArrowRight,
   IconFilter, IconX,
 } from "./icons.jsx";
-import { cellValue, googleMapsUrl } from "./utils.jsx";
+import { cellValue, googleMapsUrl, WEEKDAYS } from "./utils.jsx";
 import banner1 from "./assets/images/banner-1.jpg";
 import banner2 from "./assets/images/banner-2.jpg";
 import banner3 from "./assets/images/banner-3.jpg";
-
-/* ---- Day-of-week filter options ---- */
-const WEEKDAYS = [
-  { full: "Sunday",    short: "Sun" },
-  { full: "Monday",    short: "Mon" },
-  { full: "Tuesday",   short: "Tue" },
-  { full: "Wednesday", short: "Wed" },
-  { full: "Thursday",  short: "Thu" },
-  { full: "Friday",    short: "Fri" },
-  { full: "Saturday",  short: "Sat" },
-];
 
 /* ---- Banner slides ---- */
 const SLIDES = [banner1, banner2, banner3];

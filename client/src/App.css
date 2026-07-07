@@ -332,6 +332,179 @@
   color: var(--clr-accent);
 }
 
+/* ==============================================================
+   RADIUS FILTER
+   ============================================================== */
+.radius-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.radius-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 200px;
+}
+
+.radius-address-input {
+  width: 100%;
+  background-color: var(--clr-bg);
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  padding: 8px 128px 8px 12px;
+  font-size: 0.85rem;
+  color: var(--clr-text);
+  outline: none;
+  transition: border-color var(--transition), background-color var(--transition);
+}
+
+.radius-address-input:focus {
+  border-color: var(--clr-primary);
+}
+
+[data-theme="dark"] .radius-address-input:focus {
+  border-color: var(--clr-accent);
+}
+
+.locate-btn {
+  position: absolute;
+  right: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: none;
+  background-color: var(--clr-surface-alt);
+  color: var(--clr-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--transition), color var(--transition), transform 0.15s ease;
+}
+
+.locate-btn:hover:not(:disabled) {
+  background-color: var(--clr-primary);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .locate-btn {
+  color: var(--clr-accent);
+}
+
+[data-theme="dark"] .locate-btn:hover:not(:disabled) {
+  background-color: var(--clr-accent);
+  color: var(--clr-primary-dark);
+}
+
+.locate-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none;
+}
+
+.locate-btn svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+/* ---- Fancy tooltip for the locate-me button ---- */
+.tooltip-bubble {
+  position: absolute;
+  bottom: calc(100% + 11px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px) scale(0.96);
+  background: linear-gradient(135deg, var(--clr-primary), var(--clr-primary-dark));
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+  z-index: 20;
+}
+
+.tooltip-bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  transform: translateX(-50%) translateY(-50%) rotate(45deg);
+  background: var(--clr-primary-dark);
+}
+
+.locate-btn:hover .tooltip-bubble,
+.locate-btn:focus-visible .tooltip-bubble {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+[data-theme="dark"] .tooltip-bubble {
+  background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent-hover));
+  color: var(--clr-primary-dark);
+}
+
+[data-theme="dark"] .tooltip-bubble::after {
+  background: var(--clr-accent-hover);
+}
+
+.radius-select {
+  background-color: var(--clr-bg);
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--clr-text);
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition);
+}
+
+.radius-search-btn {
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: linear-gradient(135deg, var(--clr-primary), var(--clr-primary-light));
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity var(--transition), transform 0.15s ease;
+}
+
+.radius-search-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.radius-search-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+[data-theme="dark"] .radius-search-btn {
+  background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent-hover));
+  color: var(--clr-primary-dark);
+}
+
 /* Status messages */
 .status-text {
   color: var(--clr-text-muted);
