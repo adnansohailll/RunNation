@@ -1,7 +1,21 @@
 import { useState, useEffect } from "react";
-import { Outlet, NavLink } from "react-router-dom";
+import { Outlet, NavLink, useLocation } from "react-router-dom";
 import "./App.css";
-import { IconRun, IconSearch, IconSun, IconMoon } from "./icons.jsx";
+import { IconRun, IconSearch, IconSun, IconMoon, IconMenu, IconX } from "./icons.jsx";
+
+/* ---- Nav links, shared between the desktop bar and the mobile menu ---- */
+const navLinks = (onNavigate) => (
+  <>
+    <NavLink to="/" end className={({ isActive }) => `nav-link${isActive ? " active" : ""}`} onClick={onNavigate}>
+      Dashboard
+    </NavLink>
+    <NavLink to="/map" className={({ isActive }) => `nav-link${isActive ? " active" : ""}`} onClick={onNavigate}>
+      Map
+    </NavLink>
+    <a href="#" className="nav-link" onClick={onNavigate}>Analytics</a>
+    <a href="#" className="nav-link" onClick={onNavigate}>About</a>
+  </>
+);
 
 /* ================================================================
    App — shared layout (header + footer) wrapping the routed pages
@@ -11,7 +25,12 @@ function App() {
   const [darkMode, setDarkMode] = useState(
     () => localStorage.getItem("runsdb-theme") === "dark"
   );
-  const [search, setSearch]     = useState("");
+  const [search, setSearch]         = useState("");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const location = useLocation();
+
+  /* Close the mobile menu whenever the route changes */
+  useEffect(() => { setMobileNavOpen(false); }, [location.pathname]);
 
   /* Apply theme attribute to <html> and persist choice */
   useEffect(() => {
@@ -31,16 +50,7 @@ function App() {
           </div>
 
           {/* Navigation */}
-          <nav className="nav">
-            <NavLink to="/" end className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
-              Dashboard
-            </NavLink>
-            <NavLink to="/map" className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
-              Map
-            </NavLink>
-            <a href="#" className="nav-link">Analytics</a>
-            <a href="#" className="nav-link">About</a>
-          </nav>
+          <nav className="nav">{navLinks()}</nav>
 
           {/* Search + toggle */}
           <div className="header-right">
@@ -62,8 +72,20 @@ function App() {
             >
               {darkMode ? <IconSun /> : <IconMoon />}
             </button>
+            <button
+              className="mobile-nav-toggle"
+              onClick={() => setMobileNavOpen((o) => !o)}
+              aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileNavOpen}
+            >
+              {mobileNavOpen ? <IconX /> : <IconMenu />}
+            </button>
           </div>
         </div>
+
+        {mobileNavOpen && (
+          <nav className="mobile-nav">{navLinks(() => setMobileNavOpen(false))}</nav>
+        )}
       </header>
 
       {/* ====== ROUTED PAGE ====== */}
