@@ -1,0 +1,120 @@
+.toast-viewport {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 14px;
+  background-color: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-left: 4px solid var(--clr-primary);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  pointer-events: auto;
+  animation: toast-in 0.25s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast-success {
+  border-left-color: #2f9e58;
+}
+
+.toast-error {
+  border-left-color: #c0392b;
+}
+
+.toast-leaving {
+  opacity: 0;
+  transform: translateX(12px);
+}
+
+.toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--clr-primary);
+}
+
+.toast-success .toast-icon {
+  color: #2f9e58;
+}
+
+.toast-error .toast-icon {
+  color: #c0392b;
+}
+
+[data-theme="dark"] .toast-success .toast-icon {
+  color: #4fbf7c;
+}
+
+.toast-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.toast-message {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--clr-text);
+  line-height: 1.4;
+}
+
+.toast-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--clr-text-muted);
+  cursor: pointer;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.toast-close svg {
+  width: 11px;
+  height: 11px;
+}
+
+.toast-close:hover {
+  background-color: var(--clr-surface-alt);
+  color: var(--clr-text);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 600px) {
+  .toast-viewport {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    width: auto;
+  }
+}

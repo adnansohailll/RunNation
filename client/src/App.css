@@ -92,6 +92,18 @@
   background-color: rgba(201, 150, 58, 0.2);
 }
 
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-link svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
 /* Header right (search + toggle) */
 .header-right {
   display: flex;
@@ -188,6 +200,102 @@
 .mobile-nav-toggle svg {
   width: 20px;
   height: 20px;
+}
+
+/* Account dropdown (desktop) — Log in/Sign up, or Dashboard/Logout once
+   signed in. Hidden below 900px in favor of the stacked mobile-nav panel. */
+.account-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.account-menu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 160px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+.account-menu-trigger:hover {
+  background-color: rgba(255, 255, 255, 0.18);
+}
+
+.account-menu-trigger svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.account-menu-trigger svg:last-child {
+  width: 14px;
+  height: 14px;
+  transition: transform var(--transition);
+}
+
+.account-menu-trigger[aria-expanded="true"] svg:last-child {
+  transform: rotate(180deg);
+}
+
+.account-menu-trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  background-color: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  z-index: 200;
+  animation: mobile-nav-in 0.15s ease;
+}
+
+.account-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--clr-text);
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+.account-menu-item:hover {
+  background-color: var(--clr-surface-alt);
+}
+
+.account-menu-item svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .account-menu { display: none; }
 }
 
 /* Mobile nav dropdown panel */
@@ -1177,6 +1285,146 @@
   font-weight: 700;
   color: var(--clr-text);
   transition: color var(--transition);
+}
+
+.comments-section {
+  margin-top: 40px;
+}
+
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.comment-textarea {
+  width: 100%;
+  background-color: var(--clr-bg);
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--clr-text);
+  outline: none;
+  resize: vertical;
+  transition: border-color var(--transition);
+}
+
+.comment-textarea:focus {
+  border-color: var(--clr-primary);
+}
+
+[data-theme="dark"] .comment-textarea:focus {
+  border-color: var(--clr-accent);
+}
+
+.comment-submit-btn {
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: linear-gradient(135deg, var(--clr-primary), var(--clr-primary-light));
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity var(--transition);
+}
+
+.comment-submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.comment-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+[data-theme="dark"] .comment-submit-btn {
+  background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent-hover));
+  color: var(--clr-primary-dark);
+}
+
+.comment-login-prompt {
+  margin-top: 16px;
+}
+
+.comment-login-prompt a {
+  color: var(--clr-primary);
+  font-weight: 600;
+}
+
+[data-theme="dark"] .comment-login-prompt a {
+  color: var(--clr-accent);
+}
+
+.comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.comment-item {
+  background-color: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+.comment-item-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.comment-author {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--clr-text);
+}
+
+.comment-date {
+  font-size: 0.76rem;
+  color: var(--clr-text-muted);
+}
+
+.comment-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-left: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--clr-border);
+  background: transparent;
+  color: var(--clr-text-muted);
+  cursor: pointer;
+  transition: background-color var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.comment-delete-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.comment-delete-btn:hover {
+  border-color: #c0392b;
+  color: #c0392b;
+}
+
+.comment-body {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--clr-text);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 @media (max-width: 640px) {

@@ -4,6 +4,7 @@ import {
   IconArrowLeft, IconClock, IconMapPin, IconRoute, IconTerrain, IconUsers,
 } from "./icons.jsx";
 import { cellValue, googleMapsUrl } from "./utils.jsx";
+import RunComments from "./RunComments.jsx";
 
 const STATS = [
   { key: "average_distance", label: "Distance",    Icon: IconRoute },
@@ -17,9 +18,16 @@ export default function RunDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState(null);
 
-  useEffect(() => {
+  /* Reset loading/error state when navigating to a different run. Adjusting
+     state during render (rather than in an effect) avoids an extra re-render. */
+  const [prevId, setPrevId] = useState(id);
+  if (id !== prevId) {
+    setPrevId(id);
     setLoading(true);
     setError(null);
+  }
+
+  useEffect(() => {
     fetch(`/api/runs/${id}`)
       .then((res) => {
         if (!res.ok) return res.json().then((e) => Promise.reject(e.error));
@@ -91,6 +99,8 @@ export default function RunDetail() {
                 </div>
               ))}
             </div>
+
+            <RunComments runId={run.id} />
           </>
         )}
       </div>

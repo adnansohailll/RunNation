@@ -68,8 +68,14 @@ export default function Dashboard() {
     return matchesSearch && matchesDay;
   });
 
-  /* Reset to page 1 whenever search or day filter changes */
-  useEffect(() => { setPage(1); }, [search, selectedDays]);
+  /* Reset to page 1 whenever search or day filter changes. Adjusting state
+     during render (rather than in an effect) avoids an extra re-render. */
+  const filterKey = `${search}|${[...selectedDays].sort().join(",")}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey);
+    setPage(1);
+  }
 
   /* Pagination */
   const totalPages = Math.max(1, Math.ceil(filtered.length / CARDS_PER_PAGE));

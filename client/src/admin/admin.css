@@ -1,0 +1,510 @@
+/* ==============================================================
+   ADMIN DASHBOARD
+   ============================================================== */
+.admin-wrap {
+  flex: 1;
+  padding: 40px 24px 60px;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--clr-border);
+}
+
+.admin-tab {
+  padding: 10px 18px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--clr-text-muted);
+  border-bottom: 2px solid transparent;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.admin-tab:hover {
+  color: var(--clr-text);
+}
+
+.admin-tab.active {
+  color: var(--clr-primary);
+  border-color: var(--clr-primary);
+}
+
+[data-theme="dark"] .admin-tab.active {
+  color: var(--clr-accent);
+  border-color: var(--clr-accent);
+}
+
+.admin-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.admin-search {
+  max-width: 320px;
+  flex: 1;
+}
+
+.admin-search .auth-input {
+  padding: 9px 12px 9px 36px;
+}
+
+.admin-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: linear-gradient(135deg, var(--clr-primary), var(--clr-primary-light));
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  white-space: nowrap;
+}
+
+.admin-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.admin-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+.admin-btn-primary svg {
+  width: 15px;
+  height: 15px;
+}
+
+[data-theme="dark"] .admin-btn-primary {
+  background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent-hover));
+  color: var(--clr-primary-dark);
+}
+
+.admin-btn-secondary {
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--clr-border);
+  background: transparent;
+  color: var(--clr-text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--transition), color var(--transition);
+  white-space: nowrap;
+}
+
+.admin-btn-secondary:hover {
+  border-color: var(--clr-primary);
+  color: var(--clr-primary);
+}
+
+/* ---- Table ---- */
+.admin-table-wrap {
+  background-color: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.admin-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--clr-text-muted);
+  border-bottom: 1px solid var(--clr-border);
+  white-space: nowrap;
+}
+
+.admin-table td {
+  padding: 12px 16px;
+  color: var(--clr-text);
+  border-bottom: 1px solid var(--clr-border);
+  vertical-align: middle;
+}
+
+.admin-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.admin-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--clr-border);
+  background: transparent;
+  color: var(--clr-text-muted);
+  cursor: pointer;
+  transition: background-color var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.admin-icon-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.admin-icon-btn:hover {
+  border-color: var(--clr-primary);
+  color: var(--clr-primary);
+}
+
+.admin-icon-btn.danger:hover {
+  border-color: #c0392b;
+  color: #c0392b;
+}
+
+/* ---- Role badge ---- */
+.admin-role-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  background-color: var(--clr-surface-alt);
+  color: var(--clr-text-muted);
+}
+
+.admin-role-badge.role-admin {
+  background-color: rgba(201, 150, 58, 0.18);
+  color: var(--clr-accent-hover);
+}
+
+.admin-role-badge.role-super_admin {
+  background: linear-gradient(135deg, var(--clr-primary), var(--clr-primary-light));
+  color: #ffffff;
+}
+
+/* ---- Club chips (Users page) ---- */
+.admin-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px 3px 10px;
+  border-radius: 999px;
+  background-color: var(--clr-surface-alt);
+  color: var(--clr-text);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.admin-chip button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--clr-text-muted);
+  cursor: pointer;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.admin-chip button svg {
+  width: 10px;
+  height: 10px;
+}
+
+.admin-chip button:hover {
+  background-color: rgba(192, 57, 43, 0.15);
+  color: #c0392b;
+}
+
+.admin-chip-static {
+  padding: 3px 10px;
+}
+
+.admin-chip-empty {
+  font-size: 0.78rem;
+  color: var(--clr-text-muted);
+  font-style: italic;
+}
+
+/* ---- Assign-club inline control ---- */
+.admin-assign-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-select {
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--clr-border);
+  background-color: var(--clr-bg);
+  color: var(--clr-text);
+  font-size: 0.82rem;
+  outline: none;
+}
+
+.admin-select:focus {
+  border-color: var(--clr-primary);
+}
+
+/* ---- Modal (club form) ---- */
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 200;
+}
+
+.admin-modal {
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background-color: var(--clr-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 28px 30px;
+}
+
+.admin-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.admin-modal-header h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--clr-text);
+}
+
+.admin-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--clr-surface-alt);
+  color: var(--clr-text-muted);
+  cursor: pointer;
+}
+
+.admin-modal-close svg {
+  width: 14px;
+  height: 14px;
+}
+
+.admin-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.admin-textarea {
+  width: 100%;
+  background-color: var(--clr-bg);
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--clr-text);
+  outline: none;
+  resize: vertical;
+  transition: border-color var(--transition);
+}
+
+.admin-textarea:focus {
+  border-color: var(--clr-primary);
+}
+
+/* ---- Club logo upload ---- */
+.admin-logo-input {
+  display: none;
+}
+
+.admin-logo-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 24px;
+  border: 1.5px dashed var(--clr-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--clr-bg);
+  color: var(--clr-text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--transition), color var(--transition);
+}
+
+.admin-logo-dropzone svg {
+  width: 22px;
+  height: 22px;
+}
+
+.admin-logo-dropzone:hover {
+  border-color: var(--clr-primary);
+  color: var(--clr-primary);
+}
+
+.admin-logo-preview {
+  position: relative;
+  display: inline-flex;
+  width: 96px;
+  height: 96px;
+}
+
+.admin-logo-preview img {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--clr-border);
+}
+
+.admin-logo-remove {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--clr-surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--clr-text-muted);
+  cursor: pointer;
+}
+
+.admin-logo-remove svg {
+  width: 11px;
+  height: 11px;
+}
+
+.admin-logo-remove:hover {
+  color: #c0392b;
+}
+
+/* ---- Club admins modal ---- */
+.admin-search-results {
+  margin-top: 8px;
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.admin-search-empty {
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  color: var(--clr-text-muted);
+}
+
+.admin-search-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--clr-border);
+  color: var(--clr-text);
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+.admin-search-result:last-child {
+  border-bottom: none;
+}
+
+.admin-search-result:hover:not(:disabled) {
+  background-color: var(--clr-surface-alt);
+}
+
+.admin-search-result:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.admin-search-result svg {
+  width: 15px;
+  height: 15px;
+  color: var(--clr-text-muted);
+  flex-shrink: 0;
+}
+
+.admin-search-result-email {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--clr-text-muted);
+}
+
+.admin-admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-admin-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: var(--clr-text);
+}
+
+@media (max-width: 600px) {
+  .admin-wrap { padding: 28px 16px 48px; }
+  .admin-table th, .admin-table td { padding: 10px 12px; }
+}
