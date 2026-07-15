@@ -4,7 +4,7 @@ import {
   IconClock, IconMapPin, IconRoute, IconTerrain, IconUsers, IconArrowRight,
   IconFilter, IconX,
 } from "./icons.jsx";
-import { cellValue, googleMapsUrl, WEEKDAYS } from "./utils.jsx";
+import { cellValue, errorMessage, googleMapsUrl, WEEKDAYS } from "./utils.jsx";
 import banner1 from "./assets/images/banner-1.jpg";
 import banner2 from "./assets/images/banner-2.jpg";
 import banner3 from "./assets/images/banner-3.jpg";
@@ -42,7 +42,7 @@ export default function Dashboard() {
         setColumns(data.columns);
         setRows(data.rows);
       })
-      .catch((err) => setError(err || "Failed to load data."))
+      .catch((err) => setError(errorMessage(err, "Failed to load data.")))
       .finally(() => setLoading(false));
   }, []);
 

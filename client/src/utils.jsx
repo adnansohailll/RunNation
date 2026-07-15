@@ -9,6 +9,11 @@ export const WEEKDAYS = [
   { full: "Saturday",  short: "Sat" },
 ];
 
+/* ---- Coerce a caught fetch error (string, Error, or JSON-parse failure) into
+   a renderable string, so it's always safe to drop into JSX ---- */
+export const errorMessage = (err, fallback) =>
+  (err instanceof Error ? err.message : typeof err === "string" ? err : null) || fallback;
+
 /* ---- Render a field value, falling back to a muted em-dash ---- */
 export const cellValue = (v) =>
   v === null || v === undefined || v === ""

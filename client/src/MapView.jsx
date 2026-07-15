@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
-import { loadGoogleMaps, WEEKDAYS, haversineMiles } from "./utils.jsx";
+import { errorMessage, loadGoogleMaps, WEEKDAYS, haversineMiles } from "./utils.jsx";
 import { IconFilter, IconX, IconLocate, IconMapPin } from "./icons.jsx";
 
 /* Default map center: Jersey Shore, NJ — falls back here when no run has
@@ -46,7 +46,7 @@ export default function MapView() {
         return res.json();
       })
       .then((data) => setRows(data.rows))
-      .catch((err) => setError(err || "Failed to load data."))
+      .catch((err) => setError(errorMessage(err, "Failed to load data.")))
       .finally(() => setLoading(false));
   }, []);
 

@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import {
   IconArrowLeft, IconClock, IconMapPin, IconRoute, IconTerrain, IconUsers,
 } from "./icons.jsx";
-import { cellValue, googleMapsUrl } from "./utils.jsx";
+import { cellValue, errorMessage, googleMapsUrl } from "./utils.jsx";
 import RunComments from "./RunComments.jsx";
 
 const STATS = [
@@ -34,7 +34,7 @@ export default function RunDetail() {
         return res.json();
       })
       .then((data) => setRun(data.row))
-      .catch((err) => setError(err || "Failed to load run."))
+      .catch((err) => setError(errorMessage(err, "Failed to load run.")))
       .finally(() => setLoading(false));
   }, [id]);
 
