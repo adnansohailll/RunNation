@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import {
   IconArrowLeft, IconClock, IconMapPin, IconRoute, IconTerrain, IconUsers,
 } from "./icons.jsx";
-import { cellValue, errorMessage, googleMapsUrl } from "./utils.jsx";
+import { cellValue, errorMessage, formatTime12h, googleMapsUrl } from "./utils.jsx";
 import RunComments from "./RunComments.jsx";
 
 const STATS = [
@@ -63,7 +63,7 @@ export default function RunDetail() {
                 <span className="detail-hero-day">{cellValue(run.weekday)}</span>
                 <span className="detail-hero-time">
                   <IconClock />
-                  {cellValue(run.start_times)}
+                  {cellValue(formatTime12h(run.start_times))}
                 </span>
               </div>
 

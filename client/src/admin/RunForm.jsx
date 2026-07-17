@@ -7,16 +7,16 @@ import "./admin.css";
 const FIELDS = [
   { key: "meetup_location", label: "Meetup location", required: true },
   { key: "address_intersection", label: "Address / intersection" },
-  { key: "start_times", label: "Start time (e.g. 6:00 PM)" },
+  { key: "start_times", label: "Start time (24-hour)", type: "time" },
   { key: "average_distance", label: "Distance (e.g. 3 to 5 Miles)" },
   { key: "terrain", label: "Terrain (e.g. Road, Trail)" },
-  { key: "pace_groups", label: "Pace groups" },
+  { key: "pace_groups", label: "Pace groups", defaultValue: "All levels welcome" },
 ];
 
 export default function RunForm({ onSave, onClose }) {
   const [form, setForm] = useState(() => ({
     weekday: "",
-    ...Object.fromEntries(FIELDS.map((f) => [f.key, ""])),
+    ...Object.fromEntries(FIELDS.map((f) => [f.key, f.defaultValue ?? ""])),
   }));
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -73,7 +73,7 @@ export default function RunForm({ onSave, onClose }) {
               </label>
               <input
                 id={`run-${f.key}`}
-                type="text"
+                type={f.type || "text"}
                 className="auth-input"
                 style={{ paddingLeft: 12 }}
                 value={form[f.key]}

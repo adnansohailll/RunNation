@@ -20,6 +20,28 @@ export const cellValue = (v) =>
     ? <span className="null-val">—</span>
     : String(v);
 
+/* ---- AM/PM period from a 24-hour "HH:MM" start_times value, or null if
+   it isn't in that format ---- */
+export const timePeriod = (t) => {
+  const m = String(t ?? "").match(/^([01]?\d|2[0-3]):[0-5]\d$/);
+  if (!m) return null;
+  return Number(m[1]) < 12 ? "AM" : "PM";
+};
+
+/* ---- Display-only: render a 24-hour "HH:MM" start_times value as 12-hour
+   "H:MM AM/PM". Data stays 24-hour everywhere else (DB, forms, filtering) —
+   this is purely for what the UI shows. Falls back to the raw value if it
+   isn't in the expected format. ---- */
+export const formatTime12h = (t) => {
+  if (t === null || t === undefined || t === "") return t;
+  const m = String(t).match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+  if (!m) return t;
+  const hour24 = Number(m[1]);
+  const period = hour24 < 12 ? "AM" : "PM";
+  const hour12 = hour24 % 12 || 12;
+  return `${hour12}:${m[2]} ${period}`;
+};
+
 /* ---- Build a Google Maps search URL for a run's location ---- */
 export const googleMapsUrl = (row) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(

@@ -5,7 +5,6 @@ import './index.css'
 import App from './App.jsx'
 import Dashboard from './Dashboard.jsx'
 import RunDetail from './RunDetail.jsx'
-import MapView from './MapView.jsx'
 import { AuthProvider } from './auth/AuthContext.jsx'
 import { ToastProvider } from './toast/ToastProvider.jsx'
 import RequireRole from './auth/RequireRole.jsx'
@@ -24,7 +23,6 @@ createRoot(document.getElementById('root')).render(
             <Route element={<App />}>
               <Route index element={<Dashboard />} />
               <Route path="run/:id" element={<RunDetail />} />
-              <Route path="map" element={<MapView />} />
               <Route path="login" element={<Login />} />
               <Route path="signup" element={<Signup />} />
               <Route element={<RequireRole roles={['super_admin', 'admin']} />}>

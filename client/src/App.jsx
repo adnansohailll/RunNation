@@ -1,21 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import "./App.css";
-import { IconRun, IconSearch, IconSun, IconMoon, IconMenu, IconX, IconLogOut, IconUser, IconChevronDown } from "./icons.jsx";
+import { IconRun, IconSun, IconMoon, IconMenu, IconX, IconLogOut, IconUser, IconChevronDown } from "./icons.jsx";
 import { useAuth } from "./auth/useAuth.js";
 
 /* ---- Nav links, shared between the desktop bar and the mobile menu ---- */
 const navLinks = (onNavigate) => (
-  <>
-    <NavLink to="/" end className={({ isActive }) => `nav-link${isActive ? " active" : ""}`} onClick={onNavigate}>
-      Home
-    </NavLink>
-    <NavLink to="/map" className={({ isActive }) => `nav-link${isActive ? " active" : ""}`} onClick={onNavigate}>
-      Map
-    </NavLink>
-    <a href="#" className="nav-link" onClick={onNavigate}>Analytics</a>
-    <a href="#" className="nav-link" onClick={onNavigate}>About</a>
-  </>
+  <NavLink to="/" end className={({ isActive }) => `nav-link${isActive ? " active" : ""}`} onClick={onNavigate}>
+    Home
+  </NavLink>
 );
 
 /* ---- Right-side account dropdown: Log in/Sign up when logged out,
@@ -89,7 +82,6 @@ function App() {
   const [darkMode, setDarkMode] = useState(
     () => localStorage.getItem("runsdb-theme") === "dark"
   );
-  const [search, setSearch]         = useState("");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -128,19 +120,8 @@ function App() {
           {/* Navigation */}
           <nav className="nav">{navLinks(null)}</nav>
 
-          {/* Search + account + toggle */}
+          {/* Account + toggle */}
           <div className="header-right">
-            <div className="search-wrap">
-              <span className="search-icon"><IconSearch /></span>
-              <input
-                type="text"
-                className="search-input"
-                placeholder="Search runs…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                aria-label="Search runs"
-              />
-            </div>
             <AccountMenu user={user} onLogout={handleLogout} />
             <button
               className="theme-toggle"
@@ -183,7 +164,7 @@ function App() {
       </header>
 
       {/* ====== ROUTED PAGE ====== */}
-      <Outlet context={{ search }} />
+      <Outlet />
 
       {/* ====== FOOTER ====== */}
       <footer className="footer">

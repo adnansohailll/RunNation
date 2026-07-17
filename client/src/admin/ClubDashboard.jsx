@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth, authFetch } from "../auth/useAuth.js";
 import { useToast } from "../toast/useToast.js";
 import { IconPlus, IconRoute, IconClock } from "../icons.jsx";
-import { cellValue } from "../utils.jsx";
+import { cellValue, formatTime12h } from "../utils.jsx";
 import RunForm from "./RunForm.jsx";
 import "../auth/auth.css";
 import "./admin.css";
@@ -117,7 +117,7 @@ export default function ClubDashboard() {
                   {runs.map((r) => (
                     <tr key={r.id}>
                       <td>{cellValue(r.weekday)}</td>
-                      <td>{cellValue(r.start_times)}</td>
+                      <td>{cellValue(formatTime12h(r.start_times))}</td>
                       <td>{cellValue(r.meetup_location)}</td>
                       <td>{cellValue(r.average_distance)}</td>
                       <td>{cellValue(r.terrain)}</td>

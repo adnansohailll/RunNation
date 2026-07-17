@@ -28,6 +28,8 @@ const ADMIN_SELECT = `
 const RUN_REQUIRED_FIELDS = ['weekday', 'meetup_location'];
 const RUN_OPTIONAL_FIELDS = ['start_times', 'address_intersection', 'average_distance', 'terrain', 'pace_groups'];
 const RUN_ALL_FIELDS = [...RUN_REQUIRED_FIELDS, ...RUN_OPTIONAL_FIELDS];
+const RUN_FIELD_DEFAULTS = { pace_groups: 'All levels welcome' };
+const TIME_24H_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 // Allows super admins through unconditionally; club admins only if they
 // administer the :id club. Must run after requireAuth.
@@ -265,7 +267,15 @@ router.post('/:id/runs', requireAuth, requireClubAccess, async (req, res) => {
     return res.status(400).json({ error: `Missing required field(s): ${missing.join(', ')}` });
   }
 
-  const values = RUN_ALL_FIELDS.map((f) => req.body[f] ?? null);
+  const startTimes = String(req.body?.start_times ?? '').trim();
+  if (startTimes && !TIME_24H_RE.test(startTimes)) {
+    return res.status(400).json({ error: 'start_times must be in 24-hour HH:MM format' });
+  }
+
+  const values = RUN_ALL_FIELDS.map((f) => {
+    const raw = String(req.body[f] ?? '').trim();
+    return raw || RUN_FIELD_DEFAULTS[f] || null;
+  });
   try {
     const { rows } = await pool.query(
       `INSERT INTO run_metadata (${RUN_ALL_FIELDS.join(', ')}, club_id)

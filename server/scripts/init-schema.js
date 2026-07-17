@@ -65,6 +65,15 @@ async function main() {
   await pool.query(`ALTER TABLE clubs DROP COLUMN IF EXISTS admin_id`);
   await pool.query(`ALTER TABLE clubs ALTER COLUMN contact_email DROP NOT NULL`);
 
+  // run_metadata.pace_groups: default unset runs to "All levels welcome"
+  // instead of a blank/"Not specified" value, and backfill existing rows.
+  await pool.query(`ALTER TABLE run_metadata ALTER COLUMN pace_groups SET DEFAULT 'All levels welcome'`);
+  await pool.query(`
+    UPDATE run_metadata
+    SET pace_groups = 'All levels welcome'
+    WHERE pace_groups IS NULL OR TRIM(pace_groups) = '' OR pace_groups = 'Not specified'
+  `);
+
   const email = process.env.SUPER_ADMIN_EMAIL;
   const password = process.env.SUPER_ADMIN_PASSWORD;
   if (!email || !password) {
