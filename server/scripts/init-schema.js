@@ -65,6 +65,26 @@ async function main() {
   await pool.query(`ALTER TABLE clubs DROP COLUMN IF EXISTS admin_id`);
   await pool.query(`ALTER TABLE clubs ALTER COLUMN contact_email DROP NOT NULL`);
 
+  // run_metadata.created_at: added later so existing rows can be told apart
+  // from newly-added ones; backfilled to now() for any pre-existing rows.
+  await pool.query(`ALTER TABLE run_metadata ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now()`);
+
+  // run_comments.occurrence_date: NULL means a general/main-page comment;
+  // a set date scopes the comment to that specific calendar occurrence.
+  await pool.query(`ALTER TABLE run_comments ADD COLUMN IF NOT EXISTS occurrence_date DATE`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_run_comments_run_occurrence ON run_comments (run_id, occurrence_date)`);
+
+  // run_comments.photo_urls: Cloudinary URLs for photos attached to the
+  // comment (uploaded client-side, direct to Cloudinary). Empty array means
+  // a text-only comment.
+  await pool.query(`ALTER TABLE run_comments ADD COLUMN IF NOT EXISTS photo_urls TEXT[] NOT NULL DEFAULT '{}'`);
+
+  // run_comments.voice_note_url/_duration: an optional recorded voice note
+  // (also uploaded client-side, direct to Cloudinary). Duration (seconds) is
+  // measured at record time so the player can show it before metadata loads.
+  await pool.query(`ALTER TABLE run_comments ADD COLUMN IF NOT EXISTS voice_note_url TEXT`);
+  await pool.query(`ALTER TABLE run_comments ADD COLUMN IF NOT EXISTS voice_note_duration INTEGER`);
+
   // run_metadata.pace_groups: default unset runs to "All levels welcome"
   // instead of a blank/"Not specified" value, and backfill existing rows.
   await pool.query(`ALTER TABLE run_metadata ALTER COLUMN pace_groups SET DEFAULT 'All levels welcome'`);

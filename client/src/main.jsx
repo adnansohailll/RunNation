@@ -23,6 +23,7 @@ createRoot(document.getElementById('root')).render(
             <Route element={<App />}>
               <Route index element={<Dashboard />} />
               <Route path="run/:id" element={<RunDetail />} />
+              <Route path="run/:id/:date" element={<RunDetail />} />
               <Route path="login" element={<Login />} />
               <Route path="signup" element={<Signup />} />
               <Route element={<RequireRole roles={['super_admin', 'admin']} />}>

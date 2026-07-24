@@ -230,6 +230,34 @@ export const IconAlertCircle = () => (
   </svg>
 );
 
+export const IconMic = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="9" y="2" width="6" height="12" rx="3" />
+    <path d="M5 10a7 7 0 0 0 14 0" />
+    <line x1="12" y1="19" x2="12" y2="22" />
+    <line x1="8" y1="22" x2="16" y2="22" />
+  </svg>
+);
+
+export const IconPlay = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+    <path d="M7 4.5v15l13-7.5Z" />
+  </svg>
+);
+
+export const IconPause = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+    <rect x="6" y="4" width="4.5" height="16" rx="1" />
+    <rect x="13.5" y="4" width="4.5" height="16" rx="1" />
+  </svg>
+);
+
+export const IconSquare = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+    <rect x="6" y="6" width="12" height="12" rx="2" />
+  </svg>
+);
+
 export const IconLock = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="4" y="10" width="16" height="10" rx="2" />

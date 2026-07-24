@@ -44,17 +44,42 @@ app.get('/api/runs/:id', async (req, res) => {
   }
 });
 
-const COMMENT_COLUMNS = `rc.id, rc.body, rc.created_at, u.id AS user_id, u.name AS user_name`;
+const COMMENT_COLUMNS = `rc.id, rc.body, rc.created_at, rc.occurrence_date, rc.photo_urls, rc.voice_note_url, rc.voice_note_duration, u.id AS user_id, u.name AS user_name`;
+const MAX_COMMENT_PHOTOS = 10;
+const MAX_VOICE_NOTE_SECONDS = 130; // 2 min cap + rounding buffer
 const COMMENT_JOIN = `FROM run_comments rc JOIN users u ON u.id = rc.user_id`;
 
-// GET /api/runs/:id/comments — anyone can view a run's comments
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const WEEKDAY_INDEX = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
+
+// Parses a "YYYY-MM-DD" string as a local calendar date (not UTC, unlike `new Date(str)`).
+function parseLocalDate(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function dateOnly(d) {
+  const date = new Date(d);
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+// GET /api/runs/:id/comments — anyone can view a run's comments.
+// No ?date= → the main/general comment thread. With ?date= → that occurrence's thread.
 app.get('/api/runs/:id/comments', async (req, res) => {
   const runId = Number(req.params.id);
   if (!Number.isInteger(runId)) return res.status(400).json({ error: 'Invalid run id' });
+
+  const dateParam = req.query.date;
+  if (dateParam !== undefined && !DATE_RE.test(String(dateParam))) {
+    return res.status(400).json({ error: 'date must be in YYYY-MM-DD format' });
+  }
+
   try {
     const { rows } = await pool.query(
-      `SELECT ${COMMENT_COLUMNS} ${COMMENT_JOIN} WHERE rc.run_id = $1 ORDER BY rc.created_at ASC`,
-      [runId]
+      dateParam
+        ? `SELECT ${COMMENT_COLUMNS} ${COMMENT_JOIN} WHERE rc.run_id = $1 AND rc.occurrence_date = $2 ORDER BY rc.created_at ASC`
+        : `SELECT ${COMMENT_COLUMNS} ${COMMENT_JOIN} WHERE rc.run_id = $1 AND rc.occurrence_date IS NULL ORDER BY rc.created_at ASC`,
+      dateParam ? [runId, dateParam] : [runId]
     );
     res.json({ comments: rows });
   } catch (err) {
@@ -68,15 +93,54 @@ app.post('/api/runs/:id/comments', requireAuth, async (req, res) => {
   const runId = Number(req.params.id);
   if (!Number.isInteger(runId)) return res.status(400).json({ error: 'Invalid run id' });
   const body = String(req.body?.body ?? '').trim();
-  if (!body) return res.status(400).json({ error: 'Comment cannot be empty' });
+
+  const photoUrls = Array.isArray(req.body?.photo_urls) ? req.body.photo_urls : [];
+  if (photoUrls.length > MAX_COMMENT_PHOTOS) {
+    return res.status(400).json({ error: `A comment can have at most ${MAX_COMMENT_PHOTOS} photos` });
+  }
+  if (!photoUrls.every((url) => typeof url === 'string' && url.startsWith('https://res.cloudinary.com/'))) {
+    return res.status(400).json({ error: 'Invalid photo URL' });
+  }
+
+  const voiceNoteUrl = req.body?.voice_note_url ?? null;
+  const voiceNoteDuration = req.body?.voice_note_duration ?? null;
+  if (voiceNoteUrl !== null) {
+    if (typeof voiceNoteUrl !== 'string' || !voiceNoteUrl.startsWith('https://res.cloudinary.com/')) {
+      return res.status(400).json({ error: 'Invalid voice note URL' });
+    }
+    if (typeof voiceNoteDuration !== 'number' || !Number.isFinite(voiceNoteDuration) || voiceNoteDuration <= 0 || voiceNoteDuration > MAX_VOICE_NOTE_SECONDS) {
+      return res.status(400).json({ error: 'Invalid voice note duration' });
+    }
+  }
+
+  if (!body && photoUrls.length === 0 && !voiceNoteUrl) {
+    return res.status(400).json({ error: 'Comment cannot be empty' });
+  }
+
+  const occurrenceDate = req.body?.occurrence_date ?? null;
+  if (occurrenceDate !== null && !DATE_RE.test(String(occurrenceDate))) {
+    return res.status(400).json({ error: 'occurrence_date must be in YYYY-MM-DD format' });
+  }
 
   try {
-    const { rows: runRows } = await pool.query('SELECT id FROM run_metadata WHERE id = $1', [runId]);
+    const { rows: runRows } = await pool.query('SELECT id, weekday, created_at FROM run_metadata WHERE id = $1', [runId]);
     if (runRows.length === 0) return res.status(404).json({ error: 'Run not found' });
 
+    if (occurrenceDate !== null) {
+      const run = runRows[0];
+      const date = parseLocalDate(occurrenceDate);
+      const minDate = dateOnly(run.created_at);
+      const maxDate = dateOnly(new Date());
+      maxDate.setMonth(maxDate.getMonth() + 1);
+
+      if (date.getDay() !== WEEKDAY_INDEX[run.weekday] || date < minDate || date > maxDate) {
+        return res.status(400).json({ error: 'occurrence_date is not a valid date for this run' });
+      }
+    }
+
     const { rows: inserted } = await pool.query(
-      'INSERT INTO run_comments (run_id, user_id, body) VALUES ($1, $2, $3) RETURNING id',
-      [runId, req.user.id, body]
+      'INSERT INTO run_comments (run_id, user_id, body, occurrence_date, photo_urls, voice_note_url, voice_note_duration) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+      [runId, req.user.id, body, occurrenceDate, photoUrls, voiceNoteUrl, voiceNoteUrl ? Math.round(voiceNoteDuration) : null]
     );
     const { rows } = await pool.query(
       `SELECT ${COMMENT_COLUMNS} ${COMMENT_JOIN} WHERE rc.id = $1`,
