@@ -14,11 +14,11 @@ const FIELDS = [
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 
-export default function ClubForm({ club, onSave, onClose }) {
+export default function RunGroupForm({ runGroup, onSave, onClose }) {
   const [form, setForm] = useState(() =>
-    Object.fromEntries(FIELDS.map((f) => [f.key, club?.[f.key] ?? ""]))
+    Object.fromEntries(FIELDS.map((f) => [f.key, runGroup?.[f.key] ?? ""]))
   );
-  const [logo, setLogo] = useState(club?.logo_url ?? "");
+  const [logo, setLogo] = useState(runGroup?.logo_url ?? "");
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef(null);
@@ -62,7 +62,7 @@ export default function ClubForm({ club, onSave, onClose }) {
     <div className="admin-modal-backdrop" onClick={onClose}>
       <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
         <div className="admin-modal-header">
-          <h2>{club ? "Edit club" : "Add club"}</h2>
+          <h2>{runGroup ? "Edit run group" : "Add run group"}</h2>
           <button type="button" className="admin-modal-close" onClick={onClose} aria-label="Close">
             <IconX />
           </button>
@@ -72,11 +72,11 @@ export default function ClubForm({ club, onSave, onClose }) {
 
         <form onSubmit={handleSubmit}>
           <div className="auth-field">
-            <label className="auth-label">Club logo/banner</label>
+            <label className="auth-label">Run group logo/banner</label>
             <div className="admin-logo-upload">
               {logo ? (
                 <div className="admin-logo-preview">
-                  <img src={logo} alt="Club logo/banner preview" />
+                  <img src={logo} alt="Run group logo/banner preview" />
                   <button type="button" className="admin-logo-remove" onClick={removeLogo} aria-label="Remove logo/banner">
                     <IconX />
                   </button>
@@ -103,12 +103,12 @@ export default function ClubForm({ club, onSave, onClose }) {
 
           {FIELDS.map((f) => (
             <div className="auth-field" key={f.key}>
-              <label className="auth-label" htmlFor={`club-${f.key}`}>
+              <label className="auth-label" htmlFor={`run-group-${f.key}`}>
                 {f.label}{f.required ? " *" : ""}
               </label>
               {f.textarea ? (
                 <textarea
-                  id={`club-${f.key}`}
+                  id={`run-group-${f.key}`}
                   className="admin-textarea"
                   value={form[f.key]}
                   onChange={update(f.key)}
@@ -117,7 +117,7 @@ export default function ClubForm({ club, onSave, onClose }) {
                 />
               ) : (
                 <input
-                  id={`club-${f.key}`}
+                  id={`run-group-${f.key}`}
                   type="text"
                   className="auth-input"
                   style={{ paddingLeft: 12 }}

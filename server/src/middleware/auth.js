@@ -31,6 +31,22 @@ export function requireAuth(req, res, next) {
   }
 }
 
+// Like requireAuth, but never blocks — attaches req.user when a valid
+// Bearer token is present, otherwise leaves it unset. For routes that are
+// public but behave differently when the caller happens to be logged in.
+export function optionalAuth(req, res, next) {
+  const header = req.headers.authorization || '';
+  const [scheme, token] = header.split(' ');
+  if (scheme === 'Bearer' && token) {
+    try {
+      req.user = jwt.verify(token, getSecret());
+    } catch {
+      // Invalid/expired token on an optional route — treat as anonymous.
+    }
+  }
+  next();
+}
+
 // Must run after requireAuth. Usage: requireRole('super_admin')
 export function requireRole(...roles) {
   return (req, res, next) => {

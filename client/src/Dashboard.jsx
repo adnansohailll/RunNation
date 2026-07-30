@@ -25,6 +25,10 @@ const escapeHtml = (v) =>
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   }[c]));
 
+/* Sub-mile distances get a decimal (e.g. "0.6 mi") so nearby runs don't all
+   round down to the same "0 mi"; anything further just rounds to a whole. */
+const formatMiles = (mi) => (mi < 10 ? mi.toFixed(1) : Math.round(mi)) + " mi";
+
 export default function Dashboard() {
   const [rows, setRows]        = useState([]);
   const [loading, setLoading]  = useState(true);
@@ -43,6 +47,7 @@ export default function Dashboard() {
   const [locating, setLocating]         = useState(false);
   const [geocoding, setGeocoding]       = useState(false);
   const [radiusError, setRadiusError]   = useState(null);
+  const [distanceSort, setDistanceSort] = useState(null); // null | "asc" | "desc" — only meaningful once centerPoint is set
 
   /* Map view state */
   const [mapsApiReady, setMapsApiReady] = useState(false);
@@ -174,6 +179,7 @@ export default function Dashboard() {
     setCenterPoint(null);
     setAddressInput("");
     setRadiusError(null);
+    setDistanceSort(null);
   };
 
   /* Filter rows by selected weekdays, then by AM/PM period */
@@ -208,8 +214,28 @@ export default function Dashboard() {
     );
   }, [located, centerPoint, radiusMiles]);
 
-  const listRows = centerPoint ? withinRadius : periodFiltered;
-  const mapRows  = withinRadius;
+  /* Each located row's distance from the search centre, keyed by id — computed
+     once here and reused both for the "N mi away" label on each card and for
+     the asc/desc distance sort below, instead of recomputing per comparison. */
+  const distanceById = useMemo(() => {
+    if (!centerPoint) return null;
+    const map = new Map();
+    for (const row of located) {
+      map.set(row.id, haversineMiles(centerPoint.lat, centerPoint.lng, Number(row.latitude), Number(row.longitude)));
+    }
+    return map;
+  }, [centerPoint, located]);
+
+  const listRows = useMemo(() => {
+    const base = centerPoint ? withinRadius : periodFiltered;
+    if (!centerPoint || !distanceSort || !distanceById) return base;
+    return [...base].sort((a, b) => {
+      const diff = distanceById.get(a.id) - distanceById.get(b.id);
+      return distanceSort === "asc" ? diff : -diff;
+    });
+  }, [centerPoint, withinRadius, periodFiltered, distanceSort, distanceById]);
+
+  const mapRows = withinRadius;
 
   const unlocated     = periodFiltered.length - located.length;
   const outsideRadius = centerPoint ? located.length - withinRadius.length : 0;
@@ -223,7 +249,7 @@ export default function Dashboard() {
      Adjusting state during render (rather than in an effect) avoids an
      extra re-render. */
   const filterKey = `${[...selectedDays].sort().join(",")}|${[...selectedPeriods].sort().join(",")}|${
-    centerPoint ? `${centerPoint.lat},${centerPoint.lng},${radiusMiles}` : ""
+    centerPoint ? `${centerPoint.lat},${centerPoint.lng},${radiusMiles},${distanceSort || ""}` : ""
   }`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (filterKey !== prevFilterKey) {
@@ -505,6 +531,32 @@ export default function Dashboard() {
                     >
                       {geocoding ? "Searching…" : "Search"}
                     </button>
+
+                    <div
+                      className="sort-toggle"
+                      role="group"
+                      aria-label="Sort by distance"
+                      title={centerPoint ? undefined : "Add a location above to sort by distance"}
+                    >
+                      <button
+                        type="button"
+                        className={`sort-toggle-btn${distanceSort === "asc" ? " active" : ""}`}
+                        onClick={() => setDistanceSort((s) => (s === "asc" ? null : "asc"))}
+                        disabled={!centerPoint}
+                        aria-pressed={distanceSort === "asc"}
+                      >
+                        Nearest first
+                      </button>
+                      <button
+                        type="button"
+                        className={`sort-toggle-btn${distanceSort === "desc" ? " active" : ""}`}
+                        onClick={() => setDistanceSort((s) => (s === "desc" ? null : "desc"))}
+                        disabled={!centerPoint}
+                        aria-pressed={distanceSort === "desc"}
+                      >
+                        Farthest first
+                      </button>
+                    </div>
                   </div>
                   {centerPoint && (
                     <button className="day-filter-clear" onClick={clearRadius}>
@@ -558,6 +610,11 @@ export default function Dashboard() {
                         <div className="card-main">
                           <div className="card-info">
                             <h3 className="card-title">{cellValue(row.meetup_location)}</h3>
+                            {centerPoint && distanceById?.has(row.id) && (
+                              <p className="card-distance-away">
+                                {formatMiles(distanceById.get(row.id))} away
+                              </p>
+                            )}
                             {row.address_intersection && (
                               <a
                                 className="card-subtitle card-map-link"

@@ -4,43 +4,51 @@
    THEME VARIABLES — swap these to change the entire palette
    ============================================================ */
 :root {
-  /* Brand — Deep Teal & Champagne */
-  --clr-primary:       #1d4f5c;
-  --clr-primary-dark:  #163a45;
-  --clr-primary-light: #2a6e80;
-  --clr-accent:        #c9963a;
-  --clr-accent-hover:  #a87c30;
+  /* Brand — RunNation palette (Web + digital v1.0, July 2026) */
+  --gold:        #F8CA38;
+  --gold-text:   #9F6B03;
+  --navy:        #201863;
+  --navy-tint:   #F2F1F8;
+  --orange:      #E25F07;
+  --orange-text: #B04804;
+
+  /* Brand — mapped onto the app's existing semantic roles */
+  --clr-primary:       var(--navy);
+  --clr-primary-dark:  #150F45;
+  --clr-primary-light: var(--orange);
+  --clr-accent:        var(--gold);
+  --clr-accent-hover:  var(--gold-text);
 
   /* Backgrounds */
-  --clr-bg:            #f4f7f8;
+  --clr-bg:            var(--navy-tint);
   --clr-surface:       #ffffff;
-  --clr-surface-alt:   #eaf0f2;
+  --clr-surface-alt:   #EDEBF7;
 
   /* Text */
-  --clr-text:          #182830;
-  --clr-text-muted:    #587a86;
+  --clr-text:          var(--navy);
+  --clr-text-muted:    #6B6690;
   --clr-text-inverse:  #ffffff;
 
   /* Borders */
-  --clr-border:        #c8d6db;
+  --clr-border:        #DAD7EE;
 
   /* Header / Footer */
-  --clr-header-bg:     #112e38;
-  --clr-header-text:   #f0f8fa;
-  --clr-footer-bg:     #0a1d24;
-  --clr-footer-text:   #7aa5b4;
+  --clr-header-bg:     var(--gold);
+  --clr-header-text:   var(--navy);
+  --clr-footer-bg:     var(--gold);
+  --clr-footer-text:   #222222;
 
   /* Table */
-  --clr-thead-bg:      #1d4f5c;
-  --clr-thead-text:    #f0f8fa;
+  --clr-thead-bg:      var(--navy);
+  --clr-thead-text:    var(--navy-tint);
   --clr-row-even:      #ffffff;
-  --clr-row-odd:       #f4f7f8;
-  --clr-row-hover:     #e0ecf0;
+  --clr-row-odd:       var(--navy-tint);
+  --clr-row-hover:     #E4E1F5;
 
   /* Shadows / Radius / Transitions */
-  --shadow-sm:  0 1px 4px rgba(29, 79, 92, 0.08);
-  --shadow-md:  0 4px 18px rgba(29, 79, 92, 0.13);
-  --shadow-lg:  0 8px 32px rgba(29, 79, 92, 0.18);
+  --shadow-sm:  0 1px 4px rgba(32, 24, 99, 0.08);
+  --shadow-md:  0 4px 18px rgba(32, 24, 99, 0.13);
+  --shadow-lg:  0 8px 32px rgba(32, 24, 99, 0.18);
   --radius:     10px;
   --radius-sm:  6px;
   --transition: 0.25s ease;
@@ -48,25 +56,25 @@
 
 /* ---- Dark Mode Overrides ---- */
 [data-theme="dark"] {
-  --clr-bg:           #0d1e25;
-  --clr-surface:      #142830;
-  --clr-surface-alt:  #1b3340;
+  --clr-bg:           #14103A;
+  --clr-surface:      #1B1550;
+  --clr-surface-alt:  #211A5C;
 
-  --clr-text:         #d6ecf2;
-  --clr-text-muted:   #7aaabb;
+  --clr-text:         var(--navy-tint);
+  --clr-text-muted:   #A79FC9;
 
-  --clr-border:       #1e3d4a;
+  --clr-border:       #2C2568;
 
-  --clr-header-bg:    #081419;
-  --clr-header-text:  #d6ecf2;
-  --clr-footer-bg:    #050e13;
-  --clr-footer-text:  #4a7a8a;
+  --clr-header-bg:    var(--gold);
+  --clr-header-text:  var(--navy);
+  --clr-footer-bg:    var(--gold);
+  --clr-footer-text:  #222222;
 
-  --clr-thead-bg:     #163040;
-  --clr-thead-text:   #d6ecf2;
-  --clr-row-even:     #142830;
-  --clr-row-odd:      #1b3340;
-  --clr-row-hover:    #1f3c4c;
+  --clr-thead-bg:     #1B1550;
+  --clr-thead-text:   var(--navy-tint);
+  --clr-row-even:     #1B1550;
+  --clr-row-odd:      #211A5C;
+  --clr-row-hover:    #2A2368;
 
   --shadow-sm:  0 1px 4px rgba(0, 0, 0, 0.3);
   --shadow-md:  0 4px 18px rgba(0, 0, 0, 0.42);

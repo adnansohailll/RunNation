@@ -61,8 +61,8 @@
   padding: 9px 18px;
   border-radius: var(--radius-sm);
   border: none;
-  background: linear-gradient(135deg, var(--clr-primary), var(--clr-primary-light));
-  color: #ffffff;
+  background-color: var(--clr-accent);
+  color: var(--clr-primary);
   font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
@@ -83,11 +83,6 @@
 .admin-btn-primary svg {
   width: 15px;
   height: 15px;
-}
-
-[data-theme="dark"] .admin-btn-primary {
-  background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent-hover));
-  color: var(--clr-primary-dark);
 }
 
 .admin-btn-secondary {
@@ -195,16 +190,16 @@
 }
 
 .admin-role-badge.role-admin {
-  background-color: rgba(201, 150, 58, 0.18);
+  background-color: rgba(252, 171, 8, 0.18);
   color: var(--clr-accent-hover);
 }
 
 .admin-role-badge.role-super_admin {
-  background: linear-gradient(135deg, var(--clr-primary), var(--clr-primary-light));
-  color: #ffffff;
+  background-color: var(--clr-accent);
+  color: var(--clr-primary);
 }
 
-/* ---- Club chips (Users page) ---- */
+/* ---- Run group chips (Users page) ---- */
 .admin-chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -256,7 +251,7 @@
   font-style: italic;
 }
 
-/* ---- Assign-club inline control ---- */
+/* ---- Assign-run-group inline control ---- */
 .admin-assign-row {
   display: flex;
   align-items: center;
@@ -277,7 +272,7 @@
   border-color: var(--clr-primary);
 }
 
-/* ---- Modal (club form) ---- */
+/* ---- Modal (run group form) ---- */
 .admin-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -356,7 +351,7 @@
   border-color: var(--clr-primary);
 }
 
-/* ---- Club logo upload ---- */
+/* ---- Run group logo upload ---- */
 .admin-logo-input {
   display: none;
 }
@@ -430,7 +425,7 @@
   color: #c0392b;
 }
 
-/* ---- Club admins modal ---- */
+/* ---- Run group admins modal ---- */
 .admin-search-results {
   margin-top: 8px;
   border: 1px solid var(--clr-border);

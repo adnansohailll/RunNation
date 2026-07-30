@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { IconArrowLeft, IconArrowRight } from "./icons.jsx";
-import { WEEKDAYS } from "./utils.jsx";
 import {
   addMonths, buildMonthGrid, dateOnly, isValidOccurrence, startOfMonth, toISODate,
 } from "./runOccurrences.js";
 
-const MONTH_LABEL = { month: "long", year: "numeric" };
+const MONTH_LABEL = { month: "long" };
+const MAX_FUTURE_DATES = 2;
 
 export default function RunCalendar({ weekday, earliest, selectedDate, onSelectDate }) {
   const today = dateOnly(new Date());
@@ -22,10 +22,21 @@ export default function RunCalendar({ weekday, earliest, selectedDate, onSelectD
   const atMaxMonth = viewMonth >= maxMonth;
 
   const weeks = buildMonthGrid(viewMonth.getFullYear(), viewMonth.getMonth());
+  const monthDates = weeks
+    .flat()
+    .filter(({ date, inMonth }) => inMonth && isValidOccurrence(weekday, date, minDate, maxDate))
+    .map(({ date }) => date);
+
+  /* Past dates (browsing history) are shown in full; only the upcoming
+     ones in view are capped, so a busy month doesn't dump 4-5 pills at once. */
+  const pastDates = monthDates.filter((date) => date < today);
+  const futureDates = monthDates.filter((date) => date >= today).slice(0, MAX_FUTURE_DATES);
+  const runDates = [...pastDates, ...futureDates];
 
   return (
     <div className="run-calendar">
       <h2 className="section-title" style={{ fontSize: "1.05rem" }}>Run Dates</h2>
+      <p className="run-calendar-hint">Filter discussions by date</p>
 
       <div className="run-calendar-header">
         <button
@@ -51,44 +62,28 @@ export default function RunCalendar({ weekday, earliest, selectedDate, onSelectD
         </button>
       </div>
 
-      <div className="run-calendar-grid">
-        {WEEKDAYS.map((w) => (
-          <span key={w.full} className="run-calendar-weekday">{w.short}</span>
-        ))}
+      <div className="run-calendar-dates">
+        {runDates.length === 0 ? (
+          <p className="run-calendar-empty">No run dates this month.</p>
+        ) : (
+          runDates.map((date) => {
+            const iso = toISODate(date);
+            const isToday = date.getTime() === today.getTime();
+            const isSelected = selectedDate === iso;
 
-        {weeks.flat().map(({ date, inMonth }) => {
-          const iso = toISODate(date);
-          const valid = inMonth && isValidOccurrence(weekday, date, minDate, maxDate);
-          const isToday = date.getTime() === today.getTime();
-          const isSelected = selectedDate === iso;
-
-          if (!valid) {
             return (
-              <span
+              <button
                 key={iso}
-                className={`run-calendar-day is-disabled${inMonth ? "" : " is-outside"}`}
+                type="button"
+                className={`run-calendar-date${isSelected ? " is-selected" : ""}${isToday ? " is-today" : ""}`}
+                onClick={() => onSelectDate(iso)}
               >
                 {date.getDate()}
-              </span>
+              </button>
             );
-          }
-
-          return (
-            <button
-              key={iso}
-              type="button"
-              className={`run-calendar-day is-valid${isSelected ? " is-selected" : ""}${isToday ? " is-today" : ""}`}
-              onClick={() => onSelectDate(iso)}
-            >
-              {date.getDate()}
-            </button>
-          );
-        })}
+          })
+        )}
       </div>
-
-      <p className="run-calendar-hint">
-        Highlighted dates are when this run occurs. Select one to view or join that day's discussion.
-      </p>
     </div>
   );
 }

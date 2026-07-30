@@ -1,20 +1,32 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth, authFetch } from "../auth/useAuth.js";
 import { useToast } from "../toast/useToast.js";
 import { IconX, IconSearch, IconUserPlus } from "../icons.jsx";
 import "../auth/auth.css";
 import "./admin.css";
 
-export default function UserClubs({ user, onClose, onChange }) {
+export default function RunGroupAdmins({ runGroup, onClose }) {
   const { token } = useAuth();
   const { showToast } = useToast();
-  const [clubs, setClubs] = useState(user.clubs);
+  const [admins, setAdmins] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState(null);
-  const [removing, setRemoving] = useState(null);
+
+  const loadAdmins = useCallback(() => {
+    setLoading(true);
+    authFetch(`/api/run-groups/${runGroup.id}/admins`, token)
+      .then((data) => setAdmins(data.admins))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [runGroup.id, token]);
+
+  useEffect(() => {
+    loadAdmins();
+  }, [loadAdmins]);
 
   useEffect(() => {
     const query = search.trim();
@@ -24,31 +36,29 @@ export default function UserClubs({ user, onClose, onChange }) {
     }
     setSearching(true);
     const id = setTimeout(() => {
-      fetch(`/api/clubs?search=${encodeURIComponent(query)}`)
-        .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to search clubs"))))
-        .then((data) => setResults(data.clubs))
+      authFetch(`/api/users?search=${encodeURIComponent(query)}`, token)
+        .then((data) => setResults(data.users))
         .catch((err) => setError(err.message))
         .finally(() => setSearching(false));
     }, 250);
     return () => clearTimeout(id);
-  }, [search]);
+  }, [search, token]);
 
-  const clubIds = new Set(clubs.map((c) => c.id));
-  const candidates = results.filter((c) => !clubIds.has(c.id));
+  const adminIds = new Set(admins.map((a) => a.id));
+  const candidates = results.filter((u) => u.role !== "super_admin" && !adminIds.has(u.id));
 
-  const addClub = async (club) => {
+  const addAdmin = async (userId, userLabel) => {
     setError(null);
-    setAdding(club.id);
+    setAdding(userId);
     try {
-      await authFetch(`/api/clubs/${club.id}/admins`, token, {
+      const data = await authFetch(`/api/run-groups/${runGroup.id}/admins`, token, {
         method: "POST",
-        body: JSON.stringify({ userId: user.id }),
+        body: JSON.stringify({ userId }),
       });
-      setClubs((cs) => [...cs, { id: club.id, name: club.name }]);
+      setAdmins(data.admins);
       setSearch("");
       setResults([]);
-      showToast(`${user.name || user.email} added as admin of "${club.name}"`);
-      onChange?.();
+      showToast(`${userLabel} added as admin of "${runGroup.name}"`);
     } catch (err) {
       setError(err.message);
       showToast(err.message, "error");
@@ -57,19 +67,15 @@ export default function UserClubs({ user, onClose, onChange }) {
     }
   };
 
-  const removeClub = async (clubId, clubName) => {
+  const removeAdmin = async (userId, userLabel) => {
     setError(null);
-    setRemoving(clubId);
     try {
-      await authFetch(`/api/clubs/${clubId}/admins/${user.id}`, token, { method: "DELETE" });
-      setClubs((cs) => cs.filter((c) => c.id !== clubId));
-      showToast(`${user.name || user.email} removed as admin of "${clubName}"`);
-      onChange?.();
+      const data = await authFetch(`/api/run-groups/${runGroup.id}/admins/${userId}`, token, { method: "DELETE" });
+      setAdmins(data.admins);
+      showToast(`${userLabel} removed as admin of "${runGroup.name}"`);
     } catch (err) {
       setError(err.message);
       showToast(err.message, "error");
-    } finally {
-      setRemoving(null);
     }
   };
 
@@ -77,7 +83,7 @@ export default function UserClubs({ user, onClose, onChange }) {
     <div className="admin-modal-backdrop" onClick={onClose}>
       <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
         <div className="admin-modal-header">
-          <h2>Clubs — {user.name || user.email}</h2>
+          <h2>Admins — {runGroup.name}</h2>
           <button type="button" className="admin-modal-close" onClick={onClose} aria-label="Close">
             <IconX />
           </button>
@@ -86,13 +92,13 @@ export default function UserClubs({ user, onClose, onChange }) {
         {error && <div className="error-box" style={{ marginBottom: 16 }}>{error}</div>}
 
         <div className="auth-field">
-          <label className="auth-label">Assign club</label>
+          <label className="auth-label">Add admin</label>
           <div className="auth-input-wrap">
             <IconSearch />
             <input
               type="text"
               className="auth-input"
-              placeholder="Search clubs by name or location…"
+              placeholder="Search users by name, email, or phone…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -102,19 +108,19 @@ export default function UserClubs({ user, onClose, onChange }) {
               {searching ? (
                 <p className="admin-search-empty">Searching…</p>
               ) : candidates.length === 0 ? (
-                <p className="admin-search-empty">No matching clubs.</p>
+                <p className="admin-search-empty">No matching users.</p>
               ) : (
-                candidates.map((c) => (
+                candidates.map((u) => (
                   <button
                     type="button"
-                    key={c.id}
+                    key={u.id}
                     className="admin-search-result"
-                    onClick={() => addClub(c)}
-                    disabled={adding === c.id}
+                    onClick={() => addAdmin(u.id, u.name || u.email)}
+                    disabled={adding === u.id}
                   >
                     <span>
-                      <strong>{c.name}</strong>
-                      <span className="admin-search-result-email">{c.location}</span>
+                      <strong>{u.name || u.email}</strong>
+                      {u.name && <span className="admin-search-result-email">{u.email}</span>}
                     </span>
                     <IconUserPlus />
                   </button>
@@ -125,21 +131,20 @@ export default function UserClubs({ user, onClose, onChange }) {
         </div>
 
         <div className="auth-field">
-          <label className="auth-label">Current clubs</label>
-          {clubs.length === 0 ? (
-            <p className="admin-chip-empty">Not assigned to any club yet.</p>
+          <label className="auth-label">Current admins</label>
+          {loading ? (
+            <p className="status-text loading">Loading admins…</p>
+          ) : admins.length === 0 ? (
+            <p className="admin-chip-empty">No admins assigned yet.</p>
           ) : (
             <ul className="admin-admin-list">
-              {clubs.map((c) => (
-                <li key={c.id} className="admin-admin-list-item">
-                  <span><strong>{c.name}</strong></span>
-                  <button
-                    type="button"
-                    className="admin-icon-btn danger"
-                    onClick={() => removeClub(c.id, c.name)}
-                    disabled={removing === c.id}
-                    aria-label={`Remove ${c.name}`}
-                  >
+              {admins.map((a) => (
+                <li key={a.id} className="admin-admin-list-item">
+                  <span>
+                    <strong>{a.name || a.email}</strong>
+                    {a.name && <span className="admin-search-result-email">{a.email}</span>}
+                  </span>
+                  <button type="button" className="admin-icon-btn danger" onClick={() => removeAdmin(a.id, a.name || a.email)} aria-label={`Remove ${a.name || a.email}`}>
                     <IconX />
                   </button>
                 </li>

@@ -1,5 +1,5 @@
 // One-time (safe to re-run) script: seeds ~15-20 realistic Jersey Shore
-// running clubs and ~100 recurring weekly runs spread across them, with
+// run groups and ~100 recurring weekly runs spread across them, with
 // each run's created_at backdated to a random point in the past year so
 // the data doesn't look like it was all added today.
 //
@@ -41,7 +41,7 @@ const LOCATION_SUFFIXES = [
 ];
 
 // Jersey Shore towns, north to south, with approximate town-center coords.
-const CLUBS = [
+const RUN_GROUPS = [
   {
     name: 'Sea Bright Sunrise Runners',
     description: 'A friendly early-morning running group along the northern Monmouth County coastline. We welcome runners of every pace for our sunrise loops before the workday starts.',
@@ -64,7 +64,7 @@ const CLUBS = [
   },
   {
     name: 'Asbury Park Running Collective',
-    description: 'A community-driven club based out of Asbury Park, blending boardwalk cruises with trail trips to Hartshorne Woods.',
+    description: 'A community-driven run group based out of Asbury Park, blending boardwalk cruises with trail trips to Hartshorne Woods.',
     location: 'Asbury Park, NJ',
     contact_email: 'run@asburyparkcollective.org',
     website: 'www.asburyparkcollective.org',
@@ -94,7 +94,7 @@ const CLUBS = [
   },
   {
     name: 'Belmar Beach Runners Club',
-    description: "One of the Shore's largest running clubs, hosting weekly social runs and training groups for the Belmar 5-Mile and NYC Marathon.",
+    description: "One of the Shore's largest run groups, hosting weekly social runs and training groups for the Belmar 5-Mile and NYC Marathon.",
     location: 'Belmar, NJ',
     contact_email: 'info@belmarbeachrunners.org',
     website: 'www.belmarbeachrunners.org',
@@ -124,7 +124,7 @@ const CLUBS = [
   },
   {
     name: 'Point Pleasant Pacesetters',
-    description: "Point Pleasant Beach's community running club, known for its post-run coffee stops and welcoming attitude toward new runners.",
+    description: "Point Pleasant Beach's community run group, known for its post-run coffee stops and welcoming attitude toward new runners.",
     location: 'Point Pleasant Beach, NJ',
     contact_email: 'info@ppbpacesetters.org',
     website: 'www.ppbpacesetters.org',
@@ -144,7 +144,7 @@ const CLUBS = [
   },
   {
     name: 'Long Beach Island Sandpipers',
-    description: 'Island-wide running club covering Ship Bottom to Beach Haven, with routes that shift with the tide schedule.',
+    description: 'Island-wide run group covering Ship Bottom to Beach Haven, with routes that shift with the tide schedule.',
     location: 'Ship Bottom, NJ',
     contact_email: 'info@lbisandpipers.org',
     website: 'www.lbisandpipers.org',
@@ -154,7 +154,7 @@ const CLUBS = [
   },
   {
     name: 'Barnegat Light Lighthouse Loop Runners',
-    description: 'Small club based at the north end of LBI, famous for its loop around Barnegat Lighthouse State Park.',
+    description: 'Small run group based at the north end of LBI, famous for its loop around Barnegat Lighthouse State Park.',
     location: 'Barnegat Light, NJ',
     contact_email: 'lighthouseloop@gmail.com',
     website: '',
@@ -184,7 +184,7 @@ const CLUBS = [
   },
   {
     name: 'Ocean City Family Fun Runners',
-    description: 'A family-friendly club welcoming kids, strollers, and dogs on our relaxed boardwalk routes.',
+    description: 'A family-friendly run group welcoming kids, strollers, and dogs on our relaxed boardwalk routes.',
     location: 'Ocean City, NJ',
     contact_email: 'familyfunrunners@gmail.com',
     website: '',
@@ -214,7 +214,7 @@ const CLUBS = [
   },
   {
     name: 'Wildwood Crest Coasters',
-    description: 'Boardwalk-based club running the full Wildwoods boardwalk loop with a strong winter training group.',
+    description: 'Boardwalk-based run group running the full Wildwoods boardwalk loop with a strong winter training group.',
     location: 'Wildwood Crest, NJ',
     contact_email: 'coasters@wildwoodrun.org',
     website: '',
@@ -224,7 +224,7 @@ const CLUBS = [
   },
   {
     name: 'Cape May Point Pacers',
-    description: 'The southernmost club on the Shore, known for scenic runs past the lighthouse and along Sunset Beach.',
+    description: 'The southernmost run group on the Shore, known for scenic runs past the lighthouse and along Sunset Beach.',
     location: 'Cape May, NJ',
     contact_email: 'info@capemaypacers.org',
     website: 'www.capemaypacers.org',
@@ -234,7 +234,7 @@ const CLUBS = [
   },
   {
     name: 'Red Bank River Runners',
-    description: 'An inland Monmouth County club running along the Navesink River and Marine Park, popular with weekday commuters.',
+    description: 'An inland Monmouth County run group running along the Navesink River and Marine Park, popular with weekday commuters.',
     location: 'Red Bank, NJ',
     contact_email: 'info@redbankriverrunners.org',
     website: 'www.redbankriverrunners.org',
@@ -265,22 +265,22 @@ function randomBackdatedTimestamp() {
   return new Date(now - offset);
 }
 
-function buildRunsForClub(club) {
-  const runCount = 3 + Math.floor(Math.random() * 4); // 3-6 runs per club
+function buildRunsForRunGroup(runGroup) {
+  const runCount = 3 + Math.floor(Math.random() * 4); // 3-6 runs per run group
   const runs = [];
   for (let i = 0; i < runCount; i++) {
     const weekday = pick(WEEKDAYS);
-    const townName = club.location.replace(', NJ', '');
+    const townName = runGroup.location.replace(', NJ', '');
     runs.push({
       weekday,
       start_times: randomStartTime(weekday),
       meetup_location: `${townName} ${pick(LOCATION_SUFFIXES)}`,
-      address_intersection: `${pick(STREETS)} & ${pick(STREETS)} - ${club.location}`,
+      address_intersection: `${pick(STREETS)} & ${pick(STREETS)} - ${runGroup.location}`,
       average_distance: pick(DISTANCES),
       terrain: pick(TERRAINS),
       pace_groups: pick(PACE_GROUPS),
-      latitude: jitter(club.lat),
-      longitude: jitter(club.lng),
+      latitude: jitter(runGroup.lat),
+      longitude: jitter(runGroup.lng),
       created_at: randomBackdatedTimestamp(),
     });
   }
@@ -290,9 +290,9 @@ function buildRunsForClub(club) {
 async function main() {
   await pool.query(`ALTER TABLE run_metadata ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now()`);
 
-  const { rows: existing } = await pool.query('SELECT id FROM clubs WHERE name = $1', [CLUBS[0].name]);
+  const { rows: existing } = await pool.query('SELECT id FROM run_groups WHERE name = $1', [RUN_GROUPS[0].name]);
   if (existing.length > 0) {
-    console.log(`"${CLUBS[0].name}" already exists — sample data looks already seeded. Skipping.`);
+    console.log(`"${RUN_GROUPS[0].name}" already exists — sample data looks already seeded. Skipping.`);
     await pool.end();
     return;
   }
@@ -302,32 +302,32 @@ async function main() {
   );
   const createdBy = admins[0]?.id ?? null;
 
-  let clubCount = 0;
+  let runGroupCount = 0;
   let runCount = 0;
 
-  for (const club of CLUBS) {
+  for (const runGroup of RUN_GROUPS) {
     const { rows } = await pool.query(
-      `INSERT INTO clubs (name, description, location, contact_email, website, meetup_day, meetup_time, created_by)
+      `INSERT INTO run_groups (name, description, location, contact_email, website, meetup_day, meetup_time, created_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id`,
-      [club.name, club.description, club.location, club.contact_email, club.website, club.meetup_day, club.meetup_time, createdBy]
+      [runGroup.name, runGroup.description, runGroup.location, runGroup.contact_email, runGroup.website, runGroup.meetup_day, runGroup.meetup_time, createdBy]
     );
-    const clubId = rows[0].id;
-    clubCount++;
+    const runGroupId = rows[0].id;
+    runGroupCount++;
 
-    const runs = buildRunsForClub(club);
+    const runs = buildRunsForRunGroup(runGroup);
     for (const run of runs) {
       await pool.query(
         `INSERT INTO run_metadata
-           (weekday, start_times, meetup_location, address_intersection, average_distance, terrain, pace_groups, latitude, longitude, club_id, created_at)
+           (weekday, start_times, meetup_location, address_intersection, average_distance, terrain, pace_groups, latitude, longitude, run_group_id, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-        [run.weekday, run.start_times, run.meetup_location, run.address_intersection, run.average_distance, run.terrain, run.pace_groups, run.latitude, run.longitude, clubId, run.created_at]
+        [run.weekday, run.start_times, run.meetup_location, run.address_intersection, run.average_distance, run.terrain, run.pace_groups, run.latitude, run.longitude, runGroupId, run.created_at]
       );
       runCount++;
     }
   }
 
-  console.log(`Seeded ${clubCount} clubs and ${runCount} runs.`);
+  console.log(`Seeded ${runGroupCount} run groups and ${runCount} runs.`);
   await pool.end();
 }
 

@@ -1,13 +1,13 @@
 import { NavLink, Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../auth/useAuth.js";
-import ClubDashboard from "./ClubDashboard.jsx";
+import RunGroupDashboard from "./RunGroupDashboard.jsx";
 import "./admin.css";
 
-// /admin's index route: super admins land on the Clubs tab; club admins
-// don't have sub-routes, so there's nowhere to redirect them to.
+// /admin's index route: super admins land on the Run Groups tab; run group
+// admins don't have sub-routes, so there's nowhere to redirect them to.
 export function AdminIndex() {
   const { user } = useAuth();
-  if (user?.role === "super_admin") return <Navigate to="clubs" replace />;
+  if (user?.role === "super_admin") return <Navigate to="run-groups" replace />;
   return null;
 }
 
@@ -18,9 +18,9 @@ export default function AdminLayout() {
     return (
       <div className="container admin-wrap">
         <div className="section-header">
-          <h1 className="section-title">My Club</h1>
+          <h1 className="section-title">My Run Group</h1>
         </div>
-        <ClubDashboard />
+        <RunGroupDashboard />
       </div>
     );
   }
@@ -32,8 +32,8 @@ export default function AdminLayout() {
       </div>
 
       <nav className="admin-tabs">
-        <NavLink to="clubs" className={({ isActive }) => `admin-tab${isActive ? " active" : ""}`}>
-          Clubs
+        <NavLink to="run-groups" className={({ isActive }) => `admin-tab${isActive ? " active" : ""}`}>
+          Run Groups
         </NavLink>
         <NavLink to="users" className={({ isActive }) => `admin-tab${isActive ? " active" : ""}`}>
           Users

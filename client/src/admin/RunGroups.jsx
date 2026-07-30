@@ -2,73 +2,73 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth, authFetch } from "../auth/useAuth.js";
 import { useToast } from "../toast/useToast.js";
 import { IconEdit, IconTrash, IconPlus, IconSearch, IconUsers } from "../icons.jsx";
-import ClubForm from "./ClubForm.jsx";
-import ClubAdmins from "./ClubAdmins.jsx";
+import RunGroupForm from "./RunGroupForm.jsx";
+import RunGroupAdmins from "./RunGroupAdmins.jsx";
 import "../auth/auth.css";
 import "./admin.css";
 
-export default function Clubs() {
+export default function RunGroups() {
   const { token } = useAuth();
   const { showToast } = useToast();
-  const [clubs, setClubs] = useState([]);
+  const [runGroups, setRunGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
-  const [editingClub, setEditingClub] = useState(null);
-  const [adminsClub, setAdminsClub] = useState(null);
+  const [editingRunGroup, setEditingRunGroup] = useState(null);
+  const [adminsRunGroup, setAdminsRunGroup] = useState(null);
 
-  const loadClubs = useCallback((search = "") => {
+  const loadRunGroups = useCallback((search = "") => {
     setLoading(true);
     const qs = search ? `?search=${encodeURIComponent(search)}` : "";
-    fetch(`/api/clubs${qs}`)
-      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to load clubs"))))
-      .then((data) => setClubs(data.clubs))
+    fetch(`/api/run-groups${qs}`)
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to load run groups"))))
+      .then((data) => setRunGroups(data.runGroups))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
-    const id = setTimeout(() => loadClubs(search), 250);
+    const id = setTimeout(() => loadRunGroups(search), 250);
     return () => clearTimeout(id);
-  }, [search, loadClubs]);
+  }, [search, loadRunGroups]);
 
   const openAdd = () => {
-    setEditingClub(null);
+    setEditingRunGroup(null);
     setFormOpen(true);
   };
 
-  const openEdit = (club) => {
-    setEditingClub(club);
+  const openEdit = (runGroup) => {
+    setEditingRunGroup(runGroup);
     setFormOpen(true);
   };
 
   const closeForm = () => setFormOpen(false);
 
   const handleSave = async (fields) => {
-    if (editingClub) {
-      await authFetch(`/api/clubs/${editingClub.id}`, token, {
+    if (editingRunGroup) {
+      await authFetch(`/api/run-groups/${editingRunGroup.id}`, token, {
         method: "PUT",
         body: JSON.stringify(fields),
       });
       showToast(`"${fields.name}" updated`);
     } else {
-      await authFetch("/api/clubs", token, {
+      await authFetch("/api/run-groups", token, {
         method: "POST",
         body: JSON.stringify(fields),
       });
       showToast(`"${fields.name}" added`);
     }
     setFormOpen(false);
-    loadClubs(search);
+    loadRunGroups(search);
   };
 
-  const handleDelete = async (club) => {
-    if (!confirm(`Delete "${club.name}"? This cannot be undone.`)) return;
+  const handleDelete = async (runGroup) => {
+    if (!confirm(`Delete "${runGroup.name}"? This cannot be undone.`)) return;
     try {
-      await authFetch(`/api/clubs/${club.id}`, token, { method: "DELETE" });
-      showToast(`"${club.name}" deleted`);
-      loadClubs(search);
+      await authFetch(`/api/run-groups/${runGroup.id}`, token, { method: "DELETE" });
+      showToast(`"${runGroup.name}" deleted`);
+      loadRunGroups(search);
     } catch (err) {
       setError(err.message);
       showToast(err.message, "error");
@@ -83,21 +83,21 @@ export default function Clubs() {
           <input
             type="text"
             className="auth-input"
-            placeholder="Search clubs…"
+            placeholder="Search run groups…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <button type="button" className="admin-btn-primary" onClick={openAdd}>
-          <IconPlus /> Add club
+          <IconPlus /> Add run group
         </button>
       </div>
 
       {error && <div className="error-box" style={{ marginBottom: 16 }}>{error}</div>}
       {loading ? (
-        <p className="status-text loading">Loading clubs…</p>
-      ) : clubs.length === 0 ? (
-        <p className="status-text">No clubs found.</p>
+        <p className="status-text loading">Loading run groups…</p>
+      ) : runGroups.length === 0 ? (
+        <p className="status-text">No run groups found.</p>
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">
@@ -110,19 +110,19 @@ export default function Clubs() {
               </tr>
             </thead>
             <tbody>
-              {clubs.map((club) => (
-                <tr key={club.id}>
-                  <td>{club.name}</td>
-                  <td>{club.location}</td>
-                  <td>{club.contact_email || "—"}</td>
+              {runGroups.map((runGroup) => (
+                <tr key={runGroup.id}>
+                  <td>{runGroup.name}</td>
+                  <td>{runGroup.location}</td>
+                  <td>{runGroup.contact_email || "—"}</td>
                   <td className="admin-table-actions">
-                    <button type="button" className="admin-icon-btn" onClick={() => setAdminsClub(club)} aria-label="Manage admins">
+                    <button type="button" className="admin-icon-btn" onClick={() => setAdminsRunGroup(runGroup)} aria-label="Manage admins">
                       <IconUsers />
                     </button>
-                    <button type="button" className="admin-icon-btn" onClick={() => openEdit(club)} aria-label="Edit">
+                    <button type="button" className="admin-icon-btn" onClick={() => openEdit(runGroup)} aria-label="Edit">
                       <IconEdit />
                     </button>
-                    <button type="button" className="admin-icon-btn danger" onClick={() => handleDelete(club)} aria-label="Delete">
+                    <button type="button" className="admin-icon-btn danger" onClick={() => handleDelete(runGroup)} aria-label="Delete">
                       <IconTrash />
                     </button>
                   </td>
@@ -133,8 +133,8 @@ export default function Clubs() {
         </div>
       )}
 
-      {formOpen && <ClubForm club={editingClub} onSave={handleSave} onClose={closeForm} />}
-      {adminsClub && <ClubAdmins club={adminsClub} onClose={() => setAdminsClub(null)} />}
+      {formOpen && <RunGroupForm runGroup={editingRunGroup} onSave={handleSave} onClose={closeForm} />}
+      {adminsRunGroup && <RunGroupAdmins runGroup={adminsRunGroup} onClose={() => setAdminsRunGroup(null)} />}
     </div>
   );
 }

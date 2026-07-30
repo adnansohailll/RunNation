@@ -34,7 +34,7 @@ export default function Signup() {
       <div className="container auth-wrap">
         <div className="auth-card">
           <h1 className="auth-title">Create an account</h1>
-          <p className="auth-subtitle">Sign up to join runs and follow your favorite clubs.</p>
+          <p className="auth-subtitle">Sign up to join runs and follow your favorite run groups.</p>
 
           {error && <div className="error-box" style={{ marginBottom: 16 }}>{error}</div>}
 

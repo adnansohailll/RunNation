@@ -7,15 +7,16 @@ const router = Router();
 const MIN_PASSWORD_LENGTH = 8;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Clubs a user administers — used so the client knows which club(s) to
-// show on their "My Club" dashboard without a separate round-trip.
-async function getUserClubs(userId) {
+// Run groups a user administers — used so the client knows which run
+// group(s) to show on their "My Run Group" dashboard without a separate
+// round-trip.
+async function getUserRunGroups(userId) {
   const { rows } = await pool.query(
-    `SELECT c.id, c.name
-     FROM club_admins ca
-     JOIN clubs c ON c.id = ca.club_id
-     WHERE ca.user_id = $1
-     ORDER BY c.name ASC`,
+    `SELECT rg.id, rg.name
+     FROM run_group_admins ra
+     JOIN run_groups rg ON rg.id = ra.run_group_id
+     WHERE ra.user_id = $1
+     ORDER BY rg.name ASC`,
     [userId]
   );
   return rows;
@@ -47,8 +48,8 @@ router.post('/signup', async (req, res) => {
       [email, passwordHash, name, phone || null]
     );
     const user = rows[0];
-    // Brand new users can't administer any club yet — skip the lookup.
-    res.status(201).json({ token: signToken(user), user: { ...user, clubs: [] } });
+    // Brand new users can't administer any run group yet — skip the lookup.
+    res.status(201).json({ token: signToken(user), user: { ...user, runGroups: [] } });
   } catch (err) {
     console.error('Signup error:', err.message);
     res.status(500).json({ error: err.message });
@@ -70,8 +71,8 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
     const { password_hash, ...safeUser } = user;
-    const clubs = await getUserClubs(safeUser.id);
-    res.json({ token: signToken(safeUser), user: { ...safeUser, clubs } });
+    const runGroups = await getUserRunGroups(safeUser.id);
+    res.json({ token: signToken(safeUser), user: { ...safeUser, runGroups } });
   } catch (err) {
     console.error('Login error:', err.message);
     res.status(500).json({ error: err.message });
@@ -85,8 +86,8 @@ router.get('/me', requireAuth, async (req, res) => {
       [req.user.id]
     );
     if (rows.length === 0) return res.status(401).json({ error: 'User no longer exists' });
-    const clubs = await getUserClubs(rows[0].id);
-    res.json({ user: { ...rows[0], clubs } });
+    const runGroups = await getUserRunGroups(rows[0].id);
+    res.json({ user: { ...rows[0], runGroups } });
   } catch (err) {
     console.error('Database error:', err.message);
     res.status(500).json({ error: err.message });

@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import "./App.css";
-import { IconRun, IconSun, IconMoon, IconMenu, IconX, IconLogOut, IconUser, IconChevronDown } from "./icons.jsx";
+import { IconSun, IconMoon, IconMenu, IconX, IconLogOut, IconUser, IconChevronDown } from "./icons.jsx";
 import { useAuth } from "./auth/useAuth.js";
+import logo from "./assets/images/logo.png";
 
 /* ---- Nav links, shared between the desktop bar and the mobile menu ---- */
 const navLinks = (onNavigate) => (
@@ -113,8 +114,7 @@ function App() {
         <div className="header-inner">
           {/* Brand */}
           <div className="brand">
-            <span className="brand-icon"><IconRun /></span>
-            <span className="brand-name">Runs<span className="brand-dot">DB</span></span>
+            <img src={logo} alt="RunNation" className="brand-logo" />
           </div>
 
           {/* Navigation */}
@@ -170,11 +170,10 @@ function App() {
       <footer className="footer">
         <div className="container footer-inner">
           <div className="footer-brand">
-            <span className="brand-icon"><IconRun /></span>
-            <span className="brand-name">RunsDB</span>
+            <img src={logo} alt="RunNation" className="brand-logo" />
           </div>
           <p className="footer-copy">
-            © {new Date().getFullYear()} RunsDB. All rights reserved.
+            © {new Date().getFullYear()} RunNation. All rights reserved.
           </p>
           <div className="footer-links">
             <a href="#">Privacy</a>

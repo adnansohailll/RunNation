@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { IconArrowLeft, IconClock, IconMapPin } from "./icons.jsx";
 import { cellValue, errorMessage, formatTime12h, googleMapsUrl } from "./utils.jsx";
-import { dateOnly, isValidOccurrence } from "./runOccurrences.js";
 import RunComments from "./RunComments.jsx";
 import RunCalendar from "./RunCalendar.jsx";
+import RunAttendance from "./RunAttendance.jsx";
+import RunWeather from "./RunWeather.jsx";
 
 const STATS = [
   { key: "average_distance", label: "Distance" },
@@ -13,19 +14,29 @@ const STATS = [
 ];
 
 export default function RunDetail() {
-  const { id, date }        = useParams();
-  const navigate            = useNavigate();
-  const [run, setRun]       = useState(null);
+  const { id }               = useParams();
+  const [run, setRun]        = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError]   = useState(null);
+  const [error, setError]    = useState(null);
 
-  /* Reset loading/error state when navigating to a different run. Adjusting
+  /* Which occurrence's comments are shown — null means every comment on this
+     single discussion page. Purely local; posting is always auto-bucketed to
+     the next occurrence regardless of this filter. */
+  const [filterDate, setFilterDate] = useState(null);
+
+  /* The comment auto-posted when someone marks themselves attending, handed
+     up from RunAttendance so RunComments (a sibling, not a child) can show
+     it right away instead of waiting for its own next reload. */
+  const [joinComment, setJoinComment] = useState(null);
+
+  /* Reset loading/error/filter state when navigating to a different run. Adjusting
      state during render (rather than in an effect) avoids an extra re-render. */
   const [prevId, setPrevId] = useState(id);
   if (id !== prevId) {
     setPrevId(id);
     setLoading(true);
     setError(null);
+    setFilterDate(null);
   }
 
   useEffect(() => {
@@ -38,19 +49,6 @@ export default function RunDetail() {
       .catch((err) => setError(errorMessage(err, "Failed to load run.")))
       .finally(() => setLoading(false));
   }, [id]);
-
-  /* Bounce back to the main run page if the URL's date doesn't match a real
-     occurrence of this run (wrong weekday, or outside the supported range). */
-  useEffect(() => {
-    if (!run || !date) return;
-    const minDate = dateOnly(new Date(run.created_at));
-    const maxDate = dateOnly(new Date());
-    maxDate.setMonth(maxDate.getMonth() + 1);
-    const parsed = new Date(`${date}T00:00:00`);
-    if (Number.isNaN(parsed.getTime()) || !isValidOccurrence(run.weekday, parsed, minDate, maxDate)) {
-      navigate(`/run/${id}`, { replace: true });
-    }
-  }, [run, date, id, navigate]);
 
   return (
     <main className="main">
@@ -114,26 +112,35 @@ export default function RunDetail() {
                 </div>
               </div>
 
-              {date && (
+              {filterDate && (
                 <div className="comment-scope-banner">
                   Viewing comments for{" "}
-                  {new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
+                  {new Date(`${filterDate}T00:00:00`).toLocaleDateString(undefined, {
                     weekday: "long", month: "short", day: "numeric", year: "numeric",
                   })}
-                  <Link to={`/run/${id}`}>← Back to general discussion</Link>
+                  <button type="button" onClick={() => setFilterDate(null)}>
+                    ← Show all comments
+                  </button>
                 </div>
               )}
 
-              <RunComments runId={run.id} occurrenceDate={date} />
+              <RunComments
+                runId={run.id}
+                occurrenceDate={filterDate}
+                onPosted={() => setFilterDate(null)}
+                injectComment={joinComment}
+              />
             </div>
 
             <div className="detail-side-col">
               <RunCalendar
                 weekday={run.weekday}
                 earliest={run.created_at}
-                selectedDate={date}
-                onSelectDate={(iso) => navigate(`/run/${id}/${iso}`)}
+                selectedDate={filterDate}
+                onSelectDate={(iso) => setFilterDate((current) => (current === iso ? null : iso))}
               />
+              <RunAttendance runId={run.id} date={filterDate} onJoined={setJoinComment} />
+              <RunWeather runId={run.id} date={filterDate} />
             </div>
           </div>
         )}

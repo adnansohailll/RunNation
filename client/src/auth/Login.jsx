@@ -35,7 +35,7 @@ export default function Login() {
       <div className="container auth-wrap">
         <div className="auth-card">
           <h1 className="auth-title">Log in</h1>
-          <p className="auth-subtitle">Welcome back to RunsDB.</p>
+          <p className="auth-subtitle">Welcome back to RunNation.</p>
 
           {error && <div className="error-box" style={{ marginBottom: 16 }}>{error}</div>}
 

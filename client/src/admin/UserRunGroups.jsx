@@ -1,32 +1,20 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useAuth, authFetch } from "../auth/useAuth.js";
 import { useToast } from "../toast/useToast.js";
 import { IconX, IconSearch, IconUserPlus } from "../icons.jsx";
 import "../auth/auth.css";
 import "./admin.css";
 
-export default function ClubAdmins({ club, onClose }) {
+export default function UserRunGroups({ user, onClose, onChange }) {
   const { token } = useAuth();
   const { showToast } = useToast();
-  const [admins, setAdmins] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [runGroups, setRunGroups] = useState(user.runGroups);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState(null);
-
-  const loadAdmins = useCallback(() => {
-    setLoading(true);
-    authFetch(`/api/clubs/${club.id}/admins`, token)
-      .then((data) => setAdmins(data.admins))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [club.id, token]);
-
-  useEffect(() => {
-    loadAdmins();
-  }, [loadAdmins]);
+  const [removing, setRemoving] = useState(null);
 
   useEffect(() => {
     const query = search.trim();
@@ -36,29 +24,31 @@ export default function ClubAdmins({ club, onClose }) {
     }
     setSearching(true);
     const id = setTimeout(() => {
-      authFetch(`/api/users?search=${encodeURIComponent(query)}`, token)
-        .then((data) => setResults(data.users))
+      fetch(`/api/run-groups?search=${encodeURIComponent(query)}`)
+        .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to search run groups"))))
+        .then((data) => setResults(data.runGroups))
         .catch((err) => setError(err.message))
         .finally(() => setSearching(false));
     }, 250);
     return () => clearTimeout(id);
-  }, [search, token]);
+  }, [search]);
 
-  const adminIds = new Set(admins.map((a) => a.id));
-  const candidates = results.filter((u) => u.role !== "super_admin" && !adminIds.has(u.id));
+  const runGroupIds = new Set(runGroups.map((rg) => rg.id));
+  const candidates = results.filter((rg) => !runGroupIds.has(rg.id));
 
-  const addAdmin = async (userId, userLabel) => {
+  const addRunGroup = async (runGroup) => {
     setError(null);
-    setAdding(userId);
+    setAdding(runGroup.id);
     try {
-      const data = await authFetch(`/api/clubs/${club.id}/admins`, token, {
+      await authFetch(`/api/run-groups/${runGroup.id}/admins`, token, {
         method: "POST",
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ userId: user.id }),
       });
-      setAdmins(data.admins);
+      setRunGroups((rgs) => [...rgs, { id: runGroup.id, name: runGroup.name }]);
       setSearch("");
       setResults([]);
-      showToast(`${userLabel} added as admin of "${club.name}"`);
+      showToast(`${user.name || user.email} added as admin of "${runGroup.name}"`);
+      onChange?.();
     } catch (err) {
       setError(err.message);
       showToast(err.message, "error");
@@ -67,15 +57,19 @@ export default function ClubAdmins({ club, onClose }) {
     }
   };
 
-  const removeAdmin = async (userId, userLabel) => {
+  const removeRunGroup = async (runGroupId, runGroupName) => {
     setError(null);
+    setRemoving(runGroupId);
     try {
-      const data = await authFetch(`/api/clubs/${club.id}/admins/${userId}`, token, { method: "DELETE" });
-      setAdmins(data.admins);
-      showToast(`${userLabel} removed as admin of "${club.name}"`);
+      await authFetch(`/api/run-groups/${runGroupId}/admins/${user.id}`, token, { method: "DELETE" });
+      setRunGroups((rgs) => rgs.filter((rg) => rg.id !== runGroupId));
+      showToast(`${user.name || user.email} removed as admin of "${runGroupName}"`);
+      onChange?.();
     } catch (err) {
       setError(err.message);
       showToast(err.message, "error");
+    } finally {
+      setRemoving(null);
     }
   };
 
@@ -83,7 +77,7 @@ export default function ClubAdmins({ club, onClose }) {
     <div className="admin-modal-backdrop" onClick={onClose}>
       <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
         <div className="admin-modal-header">
-          <h2>Admins — {club.name}</h2>
+          <h2>Run Groups — {user.name || user.email}</h2>
           <button type="button" className="admin-modal-close" onClick={onClose} aria-label="Close">
             <IconX />
           </button>
@@ -92,13 +86,13 @@ export default function ClubAdmins({ club, onClose }) {
         {error && <div className="error-box" style={{ marginBottom: 16 }}>{error}</div>}
 
         <div className="auth-field">
-          <label className="auth-label">Add admin</label>
+          <label className="auth-label">Assign run group</label>
           <div className="auth-input-wrap">
             <IconSearch />
             <input
               type="text"
               className="auth-input"
-              placeholder="Search users by name, email, or phone…"
+              placeholder="Search run groups by name or location…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -108,19 +102,19 @@ export default function ClubAdmins({ club, onClose }) {
               {searching ? (
                 <p className="admin-search-empty">Searching…</p>
               ) : candidates.length === 0 ? (
-                <p className="admin-search-empty">No matching users.</p>
+                <p className="admin-search-empty">No matching run groups.</p>
               ) : (
-                candidates.map((u) => (
+                candidates.map((rg) => (
                   <button
                     type="button"
-                    key={u.id}
+                    key={rg.id}
                     className="admin-search-result"
-                    onClick={() => addAdmin(u.id, u.name || u.email)}
-                    disabled={adding === u.id}
+                    onClick={() => addRunGroup(rg)}
+                    disabled={adding === rg.id}
                   >
                     <span>
-                      <strong>{u.name || u.email}</strong>
-                      {u.name && <span className="admin-search-result-email">{u.email}</span>}
+                      <strong>{rg.name}</strong>
+                      <span className="admin-search-result-email">{rg.location}</span>
                     </span>
                     <IconUserPlus />
                   </button>
@@ -131,20 +125,21 @@ export default function ClubAdmins({ club, onClose }) {
         </div>
 
         <div className="auth-field">
-          <label className="auth-label">Current admins</label>
-          {loading ? (
-            <p className="status-text loading">Loading admins…</p>
-          ) : admins.length === 0 ? (
-            <p className="admin-chip-empty">No admins assigned yet.</p>
+          <label className="auth-label">Current run groups</label>
+          {runGroups.length === 0 ? (
+            <p className="admin-chip-empty">Not assigned to any run group yet.</p>
           ) : (
             <ul className="admin-admin-list">
-              {admins.map((a) => (
-                <li key={a.id} className="admin-admin-list-item">
-                  <span>
-                    <strong>{a.name || a.email}</strong>
-                    {a.name && <span className="admin-search-result-email">{a.email}</span>}
-                  </span>
-                  <button type="button" className="admin-icon-btn danger" onClick={() => removeAdmin(a.id, a.name || a.email)} aria-label={`Remove ${a.name || a.email}`}>
+              {runGroups.map((rg) => (
+                <li key={rg.id} className="admin-admin-list-item">
+                  <span><strong>{rg.name}</strong></span>
+                  <button
+                    type="button"
+                    className="admin-icon-btn danger"
+                    onClick={() => removeRunGroup(rg.id, rg.name)}
+                    disabled={removing === rg.id}
+                    aria-label={`Remove ${rg.name}`}
+                  >
                     <IconX />
                   </button>
                 </li>

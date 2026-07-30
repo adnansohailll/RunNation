@@ -258,6 +258,13 @@ export const IconSquare = () => (
   </svg>
 );
 
+export const IconThumbsUp = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M7 10v11" />
+    <path d="M7 10l4.5-6.5a1.5 1.5 0 0 1 2.7.9V9h4.4a2 2 0 0 1 1.96 2.4l-1.4 7A2 2 0 0 1 17.3 20H7" />
+  </svg>
+);
+
 export const IconLock = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="4" y="10" width="16" height="10" rx="2" />

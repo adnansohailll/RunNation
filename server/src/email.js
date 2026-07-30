@@ -17,14 +17,14 @@ function getTransporter() {
   return transporter;
 }
 
-// Sends the "you're now a club admin" notification email. Returns
+// Sends the "you're now a run group admin" notification email. Returns
 // { sent: boolean } — if SMTP isn't configured (or sending fails), this
 // never throws; the caller can proceed regardless.
-export async function sendClubAdminAssignedEmail({ to, name, clubName }) {
+export async function sendRunGroupAdminAssignedEmail({ to, name, runGroupName }) {
   const t = getTransporter();
   const loginUrl = `${process.env.APP_URL || 'http://localhost:5173'}/login`;
   if (!t) {
-    console.warn(`SMTP not configured — would have notified ${to} of admin access to "${clubName}"`);
+    console.warn(`SMTP not configured — would have notified ${to} of admin access to "${runGroupName}"`);
     return { sent: false };
   }
 
@@ -32,15 +32,15 @@ export async function sendClubAdminAssignedEmail({ to, name, clubName }) {
     await t.sendMail({
       from: process.env.SMTP_FROM || process.env.SMTP_USER,
       to,
-      subject: `You're now an admin of ${clubName} on RunsDB`,
-      text: `Hi${name ? ` ${name}` : ''},\n\nYou've been made an admin of "${clubName}" on RunsDB.\n\nLog in here: ${loginUrl}`,
+      subject: `You're now an admin of ${runGroupName} on RunNation`,
+      text: `Hi${name ? ` ${name}` : ''},\n\nYou've been made an admin of "${runGroupName}" on RunNation.\n\nLog in here: ${loginUrl}`,
       html: `<p>Hi${name ? ` ${name}` : ''},</p>
-        <p>You've been made an admin of <strong>${clubName}</strong> on RunsDB.</p>
-        <p><a href="${loginUrl}">Log in to RunsDB</a></p>`,
+        <p>You've been made an admin of <strong>${runGroupName}</strong> on RunNation.</p>
+        <p><a href="${loginUrl}">Log in to RunNation</a></p>`,
     });
     return { sent: true };
   } catch (err) {
-    console.error('Failed to send club-admin notification email:', err.message);
+    console.error('Failed to send run-group-admin notification email:', err.message);
     return { sent: false };
   }
 }
