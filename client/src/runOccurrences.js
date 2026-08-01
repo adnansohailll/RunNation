@@ -24,6 +24,20 @@ export const addMonths = (date, n) => new Date(date.getFullYear(), date.getMonth
 export const isValidOccurrence = (weekday, date, minDate, maxDate) =>
   date.getDay() === WEEKDAY_INDEX[weekday] && date >= minDate && date <= maxDate;
 
+/* The next `count` weekly occurrences on/after `fromDate`, capped at maxDate. */
+export const nextOccurrences = (weekday, fromDate, maxDate, count) => {
+  const dow = WEEKDAY_INDEX[weekday];
+  const diff = (dow - fromDate.getDay() + 7) % 7;
+  let cursor = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() + diff);
+
+  const dates = [];
+  while (dates.length < count && cursor <= maxDate) {
+    dates.push(cursor);
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() + 7);
+  }
+  return dates;
+};
+
 /* Weeks of {date, inMonth} cells (Sunday-first) covering the given month,
    padded with the trailing/leading days of neighboring months. */
 export const buildMonthGrid = (year, month) => {

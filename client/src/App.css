@@ -783,6 +783,75 @@
   50%       { opacity: 0.4; }
 }
 
+/* Tab switcher (e.g. Exchange page) */
+.exchange-tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  margin-bottom: 20px;
+  border-radius: 999px;
+  background-color: var(--clr-surface-alt);
+}
+
+.exchange-tab-btn {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--clr-text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.exchange-tab-btn:hover {
+  color: var(--clr-primary);
+}
+
+.exchange-tab-btn.active {
+  background-color: var(--clr-surface);
+  color: var(--clr-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .exchange-tab-btn:hover {
+  color: var(--clr-accent);
+}
+
+[data-theme="dark"] .exchange-tab-btn.active {
+  color: var(--clr-accent);
+}
+
+/* Empty-state placeholder pages (Races, Events, Instructors, …) */
+.empty-state-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 24px;
+  background-color: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+.empty-state-page svg {
+  width: 40px;
+  height: 40px;
+  color: var(--clr-text-muted);
+  opacity: 0.5;
+}
+
+.empty-state-page p {
+  color: var(--clr-text-muted);
+  font-size: 0.95rem;
+}
+
 /* Error box */
 .error-box {
   background-color: #fff0f0;
@@ -805,7 +874,7 @@
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 22px;
+  gap: 20px;
 }
 
 .run-card {
@@ -1060,6 +1129,125 @@
 }
 
 /* ==============================================================
+   CLUB CARDS
+   ============================================================== */
+.club-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background-color: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  padding: 20px 22px 22px;
+  transition: box-shadow var(--transition), transform var(--transition),
+              background-color var(--transition), border-color var(--transition);
+}
+
+.club-card:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--clr-primary-light);
+  transform: translateY(-5px);
+}
+
+[data-theme="dark"] .club-card:hover {
+  border-color: var(--clr-accent);
+}
+
+.club-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.club-card-logo {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.club-card-logo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--clr-surface-alt);
+  color: var(--clr-accent);
+}
+
+.club-card-logo-fallback svg {
+  width: 20px;
+  height: 20px;
+}
+
+.club-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.club-card-description {
+  font-size: 0.85rem;
+  color: var(--clr-text-muted);
+  line-height: 1.5;
+  transition: color var(--transition);
+}
+
+.club-card-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.club-card-contact-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--clr-text-muted);
+  transition: color var(--transition);
+}
+
+.club-card-contact-link svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--clr-accent);
+}
+
+.club-card-contact-link:hover {
+  color: var(--clr-primary);
+}
+
+.club-card-website-btn {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--clr-primary);
+  color: var(--clr-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: background-color var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.club-card-website-btn:hover {
+  background-color: var(--clr-primary);
+  color: var(--clr-text-inverse);
+}
+
+[data-theme="dark"] .club-card-website-btn {
+  border-color: var(--clr-accent);
+  color: var(--clr-accent);
+}
+
+[data-theme="dark"] .club-card-website-btn:hover {
+  background-color: var(--clr-accent);
+  color: var(--clr-primary-dark);
+}
+
+/* ==============================================================
    PAGINATION
    ============================================================== */
 .pagination {
@@ -1170,7 +1358,7 @@
 .detail-content-grid {
   display: grid;
   grid-template-columns: 1fr 300px;
-  gap: 32px;
+  gap: 20px;
   align-items: start;
 }
 
@@ -1215,19 +1403,19 @@
 
 .detail-hero-badge {
   flex-shrink: 0;
-  width: 180px;
+  width: 150px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: 14px;
-  padding: 32px 28px;
+  gap: 10px;
+  padding: 18px 20px;
   background-color: var(--clr-accent);
   border-right: 3px solid var(--clr-primary);
 }
 
 .detail-hero-day {
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--clr-primary);
   text-transform: uppercase;
@@ -1238,28 +1426,28 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--clr-text-inverse);
   background-color: var(--clr-primary);
-  padding: 5px 12px;
+  padding: 4px 10px;
   border-radius: 999px;
 }
 
 .detail-hero-time svg {
-  width: 15px;
-  height: 15px;
+  width: 13px;
+  height: 13px;
   flex-shrink: 0;
 }
 
 .detail-hero-body {
   flex: 1;
-  padding: 32px 32px;
+  padding: 18px 22px;
   min-width: 0;
 }
 
 .detail-hero-title {
-  font-size: 1.7rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--clr-text);
   line-height: 1.25;
@@ -1270,8 +1458,8 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  margin-top: 12px;
-  font-size: 0.95rem;
+  margin-top: 8px;
+  font-size: 0.86rem;
   color: var(--clr-text-muted);
   line-height: 1.5;
   transition: color var(--transition);
@@ -1288,20 +1476,20 @@
 .detail-directions-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 22px;
-  padding: 11px 22px;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 7px 16px;
   border-radius: 999px;
   background-color: var(--clr-primary);
   color: #ffffff;
-  font-size: 0.88rem;
+  font-size: 0.8rem;
   font-weight: 700;
   transition: background-color var(--transition), transform 0.15s ease;
 }
 
 .detail-directions-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
 .detail-directions-btn:hover {
@@ -1373,8 +1561,8 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 14px;
-  padding: 32px 28px;
+  gap: 8px;
+  padding: 18px 20px;
   border-left: 1px solid var(--clr-border);
   transition: border-color var(--transition);
 }
@@ -1382,11 +1570,11 @@
 .detail-hero-meta-item {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .detail-hero-meta-label {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1395,14 +1583,14 @@
 }
 
 .detail-hero-meta-value {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--clr-text);
   transition: color var(--transition);
 }
 
 .comments-section {
-  margin-top: 40px;
+  margin-top: 20px;
 }
 
 .comment-form {
@@ -2250,25 +2438,25 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    padding: 18px 22px;
+    padding: 14px 18px;
     border-right: none;
     border-bottom: 3px solid var(--clr-primary);
   }
 
   .detail-hero-body {
-    padding: 24px 22px;
+    padding: 16px 18px;
   }
 
   .detail-hero-title {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
   }
 
   .detail-hero-meta {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: flex-start;
-    gap: 16px 24px;
-    padding: 20px 22px;
+    gap: 12px 20px;
+    padding: 14px 18px;
     border-left: none;
     border-top: 1px solid var(--clr-border);
   }
@@ -2280,7 +2468,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 24px;
+  margin-top: 20px;
   padding: 12px 18px;
   background-color: var(--clr-surface-alt);
   border: 1px solid var(--clr-border);
@@ -2315,6 +2503,7 @@
 }
 
 .run-calendar {
+  margin-top: 20px;
   background-color: var(--clr-surface);
   border: 1px solid var(--clr-border);
   border-radius: var(--radius);
@@ -2366,61 +2555,61 @@
   cursor: default;
 }
 
-.run-calendar-dates {
+.run-calendar-grid {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-.run-calendar-date {
+.run-calendar-day {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
   border-radius: 50%;
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.8rem;
   border: none;
+  background: transparent;
+  color: var(--clr-text-muted);
+}
+
+.run-calendar-day.is-valid {
   cursor: pointer;
+  font-weight: 700;
   color: var(--clr-primary);
   background-color: var(--clr-surface-alt);
   transition: background-color var(--transition), color var(--transition), transform 0.15s ease;
 }
 
-.run-calendar-date:hover {
+.run-calendar-day.is-valid:hover {
   background-color: var(--clr-primary);
   color: #ffffff;
   transform: scale(1.08);
 }
 
-.run-calendar-date.is-selected {
+.run-calendar-day.is-selected {
   background-color: var(--clr-primary);
   color: #ffffff;
 }
 
-.run-calendar-date.is-today:not(.is-selected) {
+.run-calendar-day.is-today:not(.is-selected) {
   box-shadow: inset 0 0 0 1.5px var(--clr-accent);
 }
 
-[data-theme="dark"] .run-calendar-date {
+[data-theme="dark"] .run-calendar-day.is-valid {
   color: var(--clr-accent);
 }
 
-[data-theme="dark"] .run-calendar-date:hover,
-[data-theme="dark"] .run-calendar-date.is-selected {
+[data-theme="dark"] .run-calendar-day.is-valid:hover,
+[data-theme="dark"] .run-calendar-day.is-selected {
   background-color: var(--clr-accent);
   color: var(--clr-primary-dark);
 }
 
-.run-calendar-empty {
-  font-size: 0.8rem;
-  color: var(--clr-text-muted);
-}
-
 .run-calendar-hint {
-  margin-top: 1px;
+  margin-top: 14px;
   font-size: 0.76rem;
   line-height: 1.5;
   color: var(--clr-text-muted);
@@ -2527,7 +2716,6 @@
 }
 
 .run-weather {
-  margin-top: 20px;
   background-color: var(--clr-surface);
   border: 1px solid var(--clr-border);
   border-radius: var(--radius);
@@ -2596,15 +2784,24 @@
   color: var(--clr-text);
 }
 
-.run-weather-hour-label {
-  color: var(--clr-text-muted);
-  font-size: 0.76rem;
-}
-
 .run-weather-hour-precip {
   color: var(--clr-text-muted);
   font-size: 0.76rem;
   white-space: nowrap;
+}
+
+.run-weather-hour-wind {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--clr-text-muted);
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.run-weather-wind-arrow {
+  flex-shrink: 0;
+  transition: transform var(--transition);
 }
 
 /* ==============================================================

@@ -101,7 +101,22 @@ export default function RunWeather({ runId, date }) {
                     {h.precipitationProbability != null && (
                       <span className="run-weather-hour-precip">💧 {h.precipitationProbability}%</span>
                     )}
-                    <span className="run-weather-hour-label">{info.label}</span>
+                    {h.windSpeed != null && (
+                      <span className="run-weather-hour-wind">
+                        <svg
+                          className="run-weather-wind-arrow"
+                          viewBox="0 0 24 24"
+                          width="12"
+                          height="12"
+                          aria-hidden="true"
+                          style={h.windDirection != null ? { transform: `rotate(${h.windDirection + 180}deg)` } : undefined}
+                        >
+                          <line x1="12" y1="21" x2="12" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                          <path d="M7 11 L12 4 L17 11" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        {Math.round(h.windSpeed)} mph
+                      </span>
+                    )}
                   </div>
                 );
               })}

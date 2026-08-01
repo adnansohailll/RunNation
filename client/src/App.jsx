@@ -5,11 +5,27 @@ import { IconSun, IconMoon, IconMenu, IconX, IconLogOut, IconUser, IconChevronDo
 import { useAuth } from "./auth/useAuth.js";
 import logo from "./assets/images/logo.png";
 
-/* ---- Nav links, shared between the desktop bar and the mobile menu ---- */
-const navLinks = (onNavigate) => (
-  <NavLink to="/" end className={({ isActive }) => `nav-link${isActive ? " active" : ""}`} onClick={onNavigate}>
-    Home
-  </NavLink>
+/* ---- Nav links, shared between the desktop bar and the mobile menu.
+   The data-entry links are super_admin-only, so they're omitted entirely
+   rather than just disabled for everyone else. ---- */
+const navLinkClass = ({ isActive }) => `nav-link${isActive ? " active" : ""}`;
+
+const navLinks = (user, onNavigate) => (
+  <>
+    <NavLink to="/" end className={navLinkClass} onClick={onNavigate}>Runs</NavLink>
+    <NavLink to="/races" className={navLinkClass} onClick={onNavigate}>Races</NavLink>
+    <NavLink to="/events" className={navLinkClass} onClick={onNavigate}>Events</NavLink>
+    <NavLink to="/clubs" className={navLinkClass} onClick={onNavigate}>Clubs</NavLink>
+    <NavLink to="/instructors" className={navLinkClass} onClick={onNavigate}>Instructors</NavLink>
+    <NavLink to="/exchange" className={navLinkClass} onClick={onNavigate}>Exchange</NavLink>
+    <NavLink to="/shop" className={navLinkClass} onClick={onNavigate}>Shop</NavLink>
+    {user?.role === "super_admin" && (
+      <>
+        <NavLink to="/data-entry/run-groups" className={navLinkClass} onClick={onNavigate}>Add Club</NavLink>
+        <NavLink to="/data-entry/runs" className={navLinkClass} onClick={onNavigate}>Add Run</NavLink>
+      </>
+    )}
+  </>
 );
 
 /* ---- Right-side account dropdown: Log in/Sign up when logged out,
@@ -118,7 +134,7 @@ function App() {
           </div>
 
           {/* Navigation */}
-          <nav className="nav">{navLinks(null)}</nav>
+          <nav className="nav">{navLinks(user, null)}</nav>
 
           {/* Account + toggle */}
           <div className="header-right">
@@ -143,7 +159,7 @@ function App() {
 
         {mobileNavOpen && (
           <nav className="mobile-nav">
-            {navLinks(() => setMobileNavOpen(false))}
+            {navLinks(user, () => setMobileNavOpen(false))}
             {(user?.role === "super_admin" || user?.role === "admin") && (
               <NavLink to="/admin" className={({ isActive }) => `nav-link${isActive ? " active" : ""}`} onClick={() => setMobileNavOpen(false)}>
                 Dashboard

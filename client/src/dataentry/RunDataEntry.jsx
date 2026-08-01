@@ -5,7 +5,8 @@ import { WEEKDAYS } from "../utils.jsx";
 import "../auth/auth.css";
 import "../admin/admin.css";
 
-// Unlisted page (no nav link) — permalink only: /data-entry/runs
+// Nav-linked for super admins only (see App.jsx), but still reachable by
+// permalink for any logged-in user: /data-entry/runs
 // Stages a row in run_metadata_data_entry, linked to a run_group_data_entry
 // row. Only groups added through the run-group data-entry form show up in
 // the picker below — live run_groups are not queried here.

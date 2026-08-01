@@ -182,7 +182,7 @@ app.get('/api/runs/:id/weather', async (req, res) => {
     const url = new URL('https://api.open-meteo.com/v1/forecast');
     url.searchParams.set('latitude', run.latitude);
     url.searchParams.set('longitude', run.longitude);
-    url.searchParams.set('hourly', 'temperature_2m,weathercode,precipitation_probability,windspeed_10m');
+    url.searchParams.set('hourly', 'temperature_2m,weathercode,precipitation_probability,windspeed_10m,winddirection_10m');
     url.searchParams.set('temperature_unit', 'fahrenheit');
     url.searchParams.set('windspeed_unit', 'mph');
     url.searchParams.set('timezone', 'auto');
@@ -204,6 +204,7 @@ app.get('/api/runs/:id/weather', async (req, res) => {
         weatherCode: weatherData.hourly.weathercode[i],
         precipitationProbability: weatherData.hourly.precipitation_probability[i],
         windSpeed: weatherData.hourly.windspeed_10m[i],
+        windDirection: weatherData.hourly.winddirection_10m[i],
       }));
       hourly = hoursAroundStart(run.start_times, hourlyRows, date);
     } else if (!isPast) {
@@ -280,9 +281,7 @@ app.get('/api/runs/:id/attendance', optionalAuth, async (req, res) => {
 
 // POST /api/runs/:id/attendance — toggle the logged-in user's RSVP for the
 // given occurrence date (body: { date }). Only allowed for today/future
-// occurrences; the same date posted twice cancels the RSVP back off. Either
-// direction also drops a WhatsApp-style "X joined/left" info line into the
-// discussion thread for that occurrence.
+// occurrences; the same date posted twice cancels the RSVP back off.
 app.post('/api/runs/:id/attendance', requireAuth, async (req, res) => {
   const runId = Number(req.params.id);
   if (!Number.isInteger(runId)) return res.status(400).json({ error: 'Invalid run id' });
@@ -314,24 +313,12 @@ app.post('/api/runs/:id/attendance', requireAuth, async (req, res) => {
       await pool.query('DELETE FROM run_attendance WHERE id = $1', [existing[0].id]);
     }
 
-    const { rows: userRows } = await pool.query('SELECT name FROM users WHERE id = $1', [req.user.id]);
-    const attendeeName = userRows[0]?.name || 'A runner';
-    const { rows: inserted } = await pool.query(
-      'INSERT INTO run_comments (run_id, user_id, body, occurrence_date, is_system) VALUES ($1, $2, $3, $4, true) RETURNING id',
-      [runId, req.user.id, `${attendeeName} ${joining ? 'joined' : 'left'} this run`, dateParam]
-    );
-    const { rows: commentRows } = await pool.query(
-      `SELECT ${COMMENT_COLUMNS} ${COMMENT_JOIN} WHERE rc.id = $1`,
-      [inserted[0].id]
-    );
-    const comment = commentRows[0];
-
     const { rows: countRows } = await pool.query(
       'SELECT COUNT(*)::int AS count FROM run_attendance WHERE run_id = $1 AND occurrence_date = $2',
       [runId, dateParam]
     );
 
-    res.json({ date: dateParam, isFuture: true, count: countRows[0].count, attending: joining, comment });
+    res.json({ date: dateParam, isFuture: true, count: countRows[0].count, attending: joining });
   } catch (err) {
     console.error('Database error:', err.message);
     res.status(500).json({ error: err.message });

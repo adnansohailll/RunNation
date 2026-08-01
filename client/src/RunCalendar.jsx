@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { IconArrowLeft, IconArrowRight } from "./icons.jsx";
 import {
-  addMonths, buildMonthGrid, dateOnly, isValidOccurrence, startOfMonth, toISODate,
+  addMonths, buildMonthGrid, dateOnly, isValidOccurrence, nextOccurrences, startOfMonth, toISODate,
 } from "./runOccurrences.js";
 
-const MONTH_LABEL = { month: "long" };
+const MONTH_LABEL = { month: "long", year: "numeric" };
 const MAX_FUTURE_DATES = 2;
 
 export default function RunCalendar({ weekday, earliest, selectedDate, onSelectDate }) {
@@ -17,27 +17,35 @@ export default function RunCalendar({ weekday, earliest, selectedDate, onSelectD
   const [viewMonth, setViewMonth] = useState(initialMonth);
 
   const minMonth = startOfMonth(minDate);
-  const maxMonth = startOfMonth(maxDate);
   const atMinMonth = viewMonth <= minMonth;
-  const atMaxMonth = viewMonth >= maxMonth;
+
+  /* Past occurrences (browsing history) are shown in full; only the next
+     couple of upcoming ones are enabled, so the calendar doesn't light up
+     every future weekday match all the way out to maxDate. */
+  const upcomingISOs = new Set(
+    nextOccurrences(weekday, today, maxDate, MAX_FUTURE_DATES).map(toISODate)
+  );
+  const isEnabled = (date) => {
+    if (!isValidOccurrence(weekday, date, minDate, maxDate)) return false;
+    return date < today || upcomingISOs.has(toISODate(date));
+  };
 
   const weeks = buildMonthGrid(viewMonth.getFullYear(), viewMonth.getMonth());
-  const monthDates = weeks
-    .flat()
-    .filter(({ date, inMonth }) => inMonth && isValidOccurrence(weekday, date, minDate, maxDate))
-    .map(({ date }) => date);
+  const monthDates = weeks.flat().filter(({ inMonth }) => inMonth).map(({ date }) => date);
 
-  /* Past dates (browsing history) are shown in full; only the upcoming
-     ones in view are capped, so a busy month doesn't dump 4-5 pills at once. */
-  const pastDates = monthDates.filter((date) => date < today);
-  const futureDates = monthDates.filter((date) => date >= today).slice(0, MAX_FUTURE_DATES);
-  const runDates = [...pastDates, ...futureDates];
+  /* The "next month" arrow should only be usable when that month actually has
+     an enabled date left inside the [minDate, maxDate] window — maxDate is a
+     rolling ~1-month lookahead, not a month boundary, so most of the month
+     after next is otherwise all-disabled dates. */
+  const nextMonth = addMonths(viewMonth, 1);
+  const nextMonthWeeks = buildMonthGrid(nextMonth.getFullYear(), nextMonth.getMonth());
+  const nextMonthHasValidDate = nextMonthWeeks
+    .flat()
+    .some(({ date, inMonth }) => inMonth && isEnabled(date));
+  const atMaxMonth = !nextMonthHasValidDate;
 
   return (
     <div className="run-calendar">
-      <h2 className="section-title" style={{ fontSize: "1.05rem" }}>Run Dates</h2>
-      <p className="run-calendar-hint">Filter discussions by date</p>
-
       <div className="run-calendar-header">
         <button
           type="button"
@@ -62,28 +70,37 @@ export default function RunCalendar({ weekday, earliest, selectedDate, onSelectD
         </button>
       </div>
 
-      <div className="run-calendar-dates">
-        {runDates.length === 0 ? (
-          <p className="run-calendar-empty">No run dates this month.</p>
-        ) : (
-          runDates.map((date) => {
-            const iso = toISODate(date);
-            const isToday = date.getTime() === today.getTime();
-            const isSelected = selectedDate === iso;
+      <div className="run-calendar-grid">
+        {monthDates.map((date) => {
+          const iso = toISODate(date);
+          const valid = isEnabled(date);
+          const isToday = date.getTime() === today.getTime();
+          const isSelected = selectedDate === iso;
 
+          if (!valid) {
             return (
-              <button
-                key={iso}
-                type="button"
-                className={`run-calendar-date${isSelected ? " is-selected" : ""}${isToday ? " is-today" : ""}`}
-                onClick={() => onSelectDate(iso)}
-              >
+              <span key={iso} className="run-calendar-day is-disabled">
                 {date.getDate()}
-              </button>
+              </span>
             );
-          })
-        )}
+          }
+
+          return (
+            <button
+              key={iso}
+              type="button"
+              className={`run-calendar-day is-valid${isSelected ? " is-selected" : ""}${isToday ? " is-today" : ""}`}
+              onClick={() => onSelectDate(iso)}
+            >
+              {date.getDate()}
+            </button>
+          );
+        })}
       </div>
+
+      <p className="run-calendar-hint">
+        Highlighted dates are when this run occurs. Select one to view or join that day's discussion.
+      </p>
     </div>
   );
 }

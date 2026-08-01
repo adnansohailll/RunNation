@@ -5,7 +5,8 @@ import { IconImage, IconX } from "../icons.jsx";
 import "../auth/auth.css";
 import "../admin/admin.css";
 
-// Unlisted page (no nav link) — permalink only: /data-entry/run-groups
+// Nav-linked for super admins only (see App.jsx), but still reachable by
+// permalink for any logged-in user: /data-entry/run-groups
 // Stages a row in run_groups_data_entry. Nothing here touches the live
 // run_groups table; someone moves staged rows over by hand later.
 

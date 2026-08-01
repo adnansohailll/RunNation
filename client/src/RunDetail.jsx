@@ -24,11 +24,6 @@ export default function RunDetail() {
      the next occurrence regardless of this filter. */
   const [filterDate, setFilterDate] = useState(null);
 
-  /* The comment auto-posted when someone marks themselves attending, handed
-     up from RunAttendance so RunComments (a sibling, not a child) can show
-     it right away instead of waiting for its own next reload. */
-  const [joinComment, setJoinComment] = useState(null);
-
   /* Reset loading/error/filter state when navigating to a different run. Adjusting
      state during render (rather than in an effect) avoids an extra re-render. */
   const [prevId, setPrevId] = useState(id);
@@ -112,6 +107,13 @@ export default function RunDetail() {
                 </div>
               </div>
 
+              <RunCalendar
+                weekday={run.weekday}
+                earliest={run.created_at}
+                selectedDate={filterDate}
+                onSelectDate={(iso) => setFilterDate((current) => (current === iso ? null : iso))}
+              />
+
               {filterDate && (
                 <div className="comment-scope-banner">
                   Viewing comments for{" "}
@@ -128,19 +130,12 @@ export default function RunDetail() {
                 runId={run.id}
                 occurrenceDate={filterDate}
                 onPosted={() => setFilterDate(null)}
-                injectComment={joinComment}
               />
             </div>
 
             <div className="detail-side-col">
-              <RunCalendar
-                weekday={run.weekday}
-                earliest={run.created_at}
-                selectedDate={filterDate}
-                onSelectDate={(iso) => setFilterDate((current) => (current === iso ? null : iso))}
-              />
-              <RunAttendance runId={run.id} date={filterDate} onJoined={setJoinComment} />
               <RunWeather runId={run.id} date={filterDate} />
+              <RunAttendance runId={run.id} date={filterDate} />
             </div>
           </div>
         )}

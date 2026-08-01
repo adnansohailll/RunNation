@@ -13,11 +13,8 @@ const formatShortDate = (iso) =>
 /* ---- RSVP widget for a single run occurrence — the next upcoming one by
    default, or whichever date is selected on the calendar above it. Future
    occurrences get a toggle button + live count; past ones are count-only,
-   since attendance can no longer change. Joining also auto-posts a comment
-   server-side — onJoined hands that comment up so the discussion thread
-   (a sibling component) can show it immediately instead of waiting for its
-   own next reload. ---- */
-export default function RunAttendance({ runId, date, onJoined }) {
+   since attendance can no longer change. ---- */
+export default function RunAttendance({ runId, date }) {
   const { token } = useAuth();
   const [state, setState] = useState({ loading: true, error: null, data: null });
   const [toggling, setToggling] = useState(false);
@@ -47,7 +44,6 @@ export default function RunAttendance({ runId, date, onJoined }) {
         body: JSON.stringify({ date: state.data.date }),
       });
       setState((s) => ({ ...s, data: result }));
-      if (result.comment) onJoined?.(result.comment);
     } catch (err) {
       setState((s) => ({ ...s, error: err.message }));
     } finally {

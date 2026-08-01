@@ -156,7 +156,7 @@ function CommentRow({
   );
 }
 
-export default function RunComments({ runId, occurrenceDate, onPosted, injectComment }) {
+export default function RunComments({ runId, occurrenceDate, onPosted }) {
   const { user, token } = useAuth();
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -200,16 +200,6 @@ export default function RunComments({ runId, occurrenceDate, onPosted, injectCom
   useEffect(() => {
     loadComments();
   }, [loadComments]);
-
-  // The attendance widget (a sibling, not a child) auto-posts a comment when
-  // someone joins a run and hands it up here so it appears immediately
-  // instead of waiting for this list's next reload. Only prepend it if it
-  // belongs to whichever occurrence is currently in view.
-  useEffect(() => {
-    if (!injectComment) return;
-    if (occurrenceDate && injectComment.occurrence_date !== occurrenceDate) return;
-    setComments((cs) => (cs.some((c) => c.id === injectComment.id) ? cs : [injectComment, ...cs]));
-  }, [injectComment, occurrenceDate]);
 
   // Using the current comment count as the offset (rather than a separately
   // tracked page number) keeps this correct even if a comment was added or
