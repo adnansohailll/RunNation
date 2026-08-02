@@ -188,11 +188,12 @@ async function main() {
     WHERE pace_groups IS NULL OR TRIM(pace_groups) = '' OR pace_groups = 'Not specified'
   `);
 
-  // run_attendance: one row per user who has RSVP'd to a run occurrence.
-  // POSTing again removes the row (a toggle back off) — presence of the row
-  // *is* the RSVP, there's no separate boolean. Only meaningful for
-  // today/future occurrences; the API rejects writes for past dates, but old
-  // rows are kept so a past occurrence's row count still reads as "attended".
+  // run_attendance: one row per user who has picked a status ('in', 'cant',
+  // 'interested') for a run occurrence. Picking the same status again removes
+  // the row (a toggle back off to "no selection"); picking a different status
+  // updates it in place. Only meaningful for today/future occurrences; the
+  // API rejects writes for past dates, but old rows are kept so history stays
+  // intact.
   await pool.query(`
     CREATE TABLE IF NOT EXISTS run_attendance (
       id              SERIAL PRIMARY KEY,
@@ -204,6 +205,16 @@ async function main() {
     )
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_run_attendance_run_occurrence ON run_attendance (run_id, occurrence_date)`);
+
+  // run_attendance.status: which of the three RSVP options the user picked.
+  // Existing rows (from before this column existed) default to 'in', since
+  // presence-of-row used to mean "I'm in" outright.
+  await pool.query(`ALTER TABLE run_attendance ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'in'`);
+  await pool.query(`ALTER TABLE run_attendance DROP CONSTRAINT IF EXISTS run_attendance_status_check`);
+  await pool.query(`
+    ALTER TABLE run_attendance
+    ADD CONSTRAINT run_attendance_status_check CHECK (status IN ('in', 'cant', 'interested'))
+  `);
 
   // run_weather_snapshots: one row per (run, occurrence date) holding the
   // hourly conditions around that run's start time. Not merged into
@@ -232,12 +243,10 @@ async function main() {
   // user directly, so there's no delete affordance for them either.
   await pool.query(`ALTER TABLE run_comments ADD COLUMN IF NOT EXISTS is_system BOOLEAN NOT NULL DEFAULT false`);
 
-  // run_comments.parent_comment_id: replies, Facebook-style — one level deep
-  // only. NULL means a top-level comment; set means a reply, and the API
-  // always resolves it to the top-level ancestor even if the client sends a
-  // reply's id (so replying to a reply flattens into the same thread rather
-  // than nesting further). ON DELETE CASCADE means deleting a top-level
-  // comment takes its replies with it.
+  // run_comments.parent_comment_id: replies, nested to any depth — NULL means
+  // a top-level comment, set means a reply to whichever comment (top-level or
+  // itself a reply) that id points to. ON DELETE CASCADE means deleting a
+  // comment takes its whole reply subtree with it.
   await pool.query(`ALTER TABLE run_comments ADD COLUMN IF NOT EXISTS parent_comment_id INTEGER REFERENCES run_comments(id) ON DELETE CASCADE`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_run_comments_parent ON run_comments (parent_comment_id)`);
 

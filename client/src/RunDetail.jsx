@@ -4,8 +4,8 @@ import { IconArrowLeft, IconClock, IconMapPin } from "./icons.jsx";
 import { cellValue, errorMessage, formatTime12h, googleMapsUrl } from "./utils.jsx";
 import RunComments from "./RunComments.jsx";
 import RunCalendar from "./RunCalendar.jsx";
-import RunAttendance from "./RunAttendance.jsx";
 import RunWeather from "./RunWeather.jsx";
+import RunParticipants from "./RunParticipants.jsx";
 
 const STATS = [
   { key: "average_distance", label: "Distance" },
@@ -23,6 +23,15 @@ export default function RunDetail() {
      single discussion page. Purely local; posting is always auto-bucketed to
      the next occurrence regardless of this filter. */
   const [filterDate, setFilterDate] = useState(null);
+
+  /* Bumped whenever the calendar's attendance dropdown changes someone's
+     status, so the read-only participants count (a separate component,
+     fetched independently) knows to refetch instead of going stale. */
+  const [attendanceVersion, setAttendanceVersion] = useState(0);
+
+  /* Bumped whenever the calendar's post-selection comment prompt posts a
+     comment, so the (separately fetched) comments list below picks it up. */
+  const [commentsVersion, setCommentsVersion] = useState(0);
 
   /* Reset loading/error/filter state when navigating to a different run. Adjusting
      state during render (rather than in an effect) avoids an extra re-render. */
@@ -108,10 +117,13 @@ export default function RunDetail() {
               </div>
 
               <RunCalendar
+                runId={run.id}
                 weekday={run.weekday}
                 earliest={run.created_at}
                 selectedDate={filterDate}
                 onSelectDate={(iso) => setFilterDate((current) => (current === iso ? null : iso))}
+                onStatusChange={() => setAttendanceVersion((v) => v + 1)}
+                onCommentPosted={() => setCommentsVersion((v) => v + 1)}
               />
 
               {filterDate && (
@@ -130,12 +142,13 @@ export default function RunDetail() {
                 runId={run.id}
                 occurrenceDate={filterDate}
                 onPosted={() => setFilterDate(null)}
+                refreshKey={commentsVersion}
               />
             </div>
 
             <div className="detail-side-col">
               <RunWeather runId={run.id} date={filterDate} />
-              <RunAttendance runId={run.id} date={filterDate} />
+              <RunParticipants runId={run.id} date={filterDate} refreshKey={attendanceVersion} />
             </div>
           </div>
         )}

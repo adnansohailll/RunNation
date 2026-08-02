@@ -2072,37 +2072,13 @@
   margin-top: 10px;
 }
 
-.comment-reaction-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.comment-reaction-pill {
-  padding: 3px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--clr-border);
-  background-color: var(--clr-surface-alt);
+.comment-like-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   color: var(--clr-text-muted);
   font-size: 0.78rem;
-  cursor: pointer;
-  transition: border-color var(--transition), background-color var(--transition);
-}
-
-.comment-reaction-pill:disabled {
-  cursor: default;
-}
-
-.comment-reaction-pill.is-mine {
-  border-color: var(--clr-primary);
-  background-color: var(--clr-surface);
-  color: var(--clr-primary);
   font-weight: 700;
-}
-
-[data-theme="dark"] .comment-reaction-pill.is-mine {
-  border-color: var(--clr-accent);
-  color: var(--clr-accent);
 }
 
 .comment-action-links {
@@ -2168,7 +2144,7 @@
 }
 
 .comment-like-emoji {
-  font-size: 0.95rem;
+  font-size: 1.15rem;
   line-height: 1;
 }
 
@@ -2177,10 +2153,10 @@
   bottom: 100%;
   left: 0;
   display: flex;
-  gap: 4px;
+  gap: 6px;
   width: max-content;
-  margin-bottom: 8px;
-  padding: 6px 8px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
   border-radius: 999px;
   background-color: var(--clr-surface);
   border: 1px solid var(--clr-border);
@@ -2188,7 +2164,7 @@
   z-index: 5;
 }
 
-/* The 8px margin-bottom above leaves a visual gap between the picker and the
+/* The 10px margin-bottom above leaves a visual gap between the picker and the
    Like button below it. That gap belongs to neither element, so moving the
    mouse straight up through it exits comment-like-wrapper's hover area and
    closes the picker before the cursor arrives — this invisible pseudo-element
@@ -2200,21 +2176,28 @@
   left: 0;
   right: 0;
   top: 100%;
-  height: 8px;
+  height: 10px;
 }
 
 .comment-emoji-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   border: none;
   background: none;
-  padding: 2px;
-  font-size: 1.25rem;
+  padding: 0;
+  font-size: 1.4rem;
   line-height: 1;
   cursor: pointer;
-  transition: transform 0.12s ease;
+  transition: transform 0.12s ease, background-color 0.12s ease;
 }
 
 .comment-emoji-option:hover {
-  transform: scale(1.35) translateY(-2px);
+  background-color: var(--clr-surface-alt);
+  transform: scale(1.3) translateY(-3px);
 }
 
 .comment-reply-form {
@@ -2615,6 +2598,184 @@
   color: var(--clr-text-muted);
 }
 
+.run-calendar-day-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 32px;
+  flex-shrink: 0;
+}
+
+.run-calendar-status-slot {
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.run-calendar-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.run-calendar-status-dot.is-in {
+  background-color: #22c55e;
+}
+
+.run-calendar-status-dot.is-cant {
+  background-color: #ef4444;
+}
+
+.run-calendar-status-dot.is-interested {
+  background-color: #f5a623;
+}
+
+.run-calendar-attend-menu {
+  position: absolute;
+  top: 32px; /* pinned to the day button's height, independent of the dot slot below it */
+  left: 50%;
+  transform: translateX(-50%);
+  padding-top: 2px;
+  z-index: 20;
+}
+
+.run-calendar-attend-menu-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 152px;
+  background-color: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  padding: 6px;
+}
+
+.run-calendar-attend-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--clr-text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+.run-calendar-attend-option:hover:not(:disabled) {
+  background-color: var(--clr-surface-alt);
+}
+
+.run-calendar-attend-option:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.run-calendar-attend-option.is-active {
+  background-color: var(--clr-surface-alt);
+}
+
+.run-calendar-attend-login-link {
+  display: block;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--clr-primary);
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .run-calendar-attend-login-link {
+  color: var(--clr-accent);
+}
+
+.run-calendar-comment-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 220px;
+  padding: 10px;
+  background-color: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+}
+
+.run-calendar-comment-textarea {
+  width: 100%;
+  background-color: var(--clr-bg);
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  font-family: inherit;
+  color: var(--clr-text);
+  outline: none;
+  resize: vertical;
+  transition: border-color var(--transition);
+}
+
+.run-calendar-comment-textarea:focus {
+  border-color: var(--clr-primary);
+}
+
+[data-theme="dark"] .run-calendar-comment-textarea:focus {
+  border-color: var(--clr-accent);
+}
+
+.run-calendar-comment-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.run-calendar-comment-cancel {
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--clr-border);
+  background: transparent;
+  color: var(--clr-text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color var(--transition), color var(--transition);
+}
+
+.run-calendar-comment-cancel:hover:not(:disabled) {
+  border-color: var(--clr-primary);
+  color: var(--clr-primary);
+}
+
+.run-calendar-comment-post {
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background-color: var(--clr-accent);
+  color: var(--clr-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity var(--transition);
+}
+
+.run-calendar-comment-post:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.run-calendar-comment-post:disabled,
+.run-calendar-comment-cancel:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 @media (max-width: 900px) {
   .detail-content-grid {
     grid-template-columns: 1fr;
@@ -2623,96 +2784,6 @@
   .detail-side-col {
     position: static;
   }
-}
-
-.run-attendance {
-  margin-top: 20px;
-  background-color: var(--clr-surface);
-  border: 1px solid var(--clr-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  padding: 20px 20px 22px;
-  transition: background-color var(--transition), border-color var(--transition);
-}
-
-.run-attendance-body {
-  margin-top: 14px;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-}
-
-.run-attendance-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background-color: var(--clr-surface-alt);
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--clr-text);
-  white-space: nowrap;
-}
-
-.run-attendance-empty {
-  margin-top: 14px;
-  font-size: 0.82rem;
-  line-height: 1.5;
-  color: var(--clr-text-muted);
-}
-
-.run-attendance-btn {
-  padding: 10px 20px;
-  border-radius: 999px;
-  border: none;
-  background-color: var(--clr-primary);
-  color: #ffffff;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background-color var(--transition), transform 0.15s ease, opacity var(--transition);
-}
-
-.run-attendance-btn:hover:not(:disabled) {
-  background-color: var(--clr-primary-light);
-  transform: translateY(-1px);
-}
-
-.run-attendance-btn:disabled {
-  opacity: 0.6;
-  cursor: default;
-  transform: none;
-}
-
-.run-attendance-btn.is-joined {
-  background-color: var(--clr-accent);
-  color: var(--clr-primary);
-}
-
-.run-attendance-login-link {
-  padding: 10px 20px;
-  border-radius: 999px;
-  border: 1px solid var(--clr-border);
-  color: var(--clr-primary);
-  font-size: 0.85rem;
-  font-weight: 700;
-  transition: border-color var(--transition), color var(--transition);
-}
-
-.run-attendance-login-link:hover {
-  border-color: var(--clr-primary);
-}
-
-[data-theme="dark"] .run-attendance-login-link {
-  color: var(--clr-accent);
-}
-
-[data-theme="dark"] .run-attendance-login-link:hover {
-  border-color: var(--clr-accent);
 }
 
 .run-weather {
@@ -2802,6 +2873,83 @@
 .run-weather-wind-arrow {
   flex-shrink: 0;
   transition: transform var(--transition);
+}
+
+.run-participants {
+  margin-top: 20px;
+  background-color: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 20px 20px 22px;
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+.run-participants-empty {
+  margin-top: 14px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--clr-text-muted);
+}
+
+.run-participants-count-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.run-participants-count-wrap.is-hoverable {
+  cursor: pointer;
+}
+
+.run-participants-count {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--clr-primary);
+}
+
+[data-theme="dark"] .run-participants-count {
+  color: var(--clr-accent);
+}
+
+.run-participants-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--clr-text-muted);
+}
+
+.run-participants-popover {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  padding-top: 8px;
+  z-index: 20;
+}
+
+.run-participants-list {
+  list-style: none;
+  margin: 0;
+  min-width: 180px;
+  max-width: 260px;
+  max-height: 220px;
+  overflow-y: auto;
+  background-color: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  padding: 8px 0;
+}
+
+.run-participants-list li {
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--clr-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ==============================================================

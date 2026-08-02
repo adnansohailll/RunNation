@@ -238,11 +238,96 @@ app.get('/api/runs/:id/weather', async (req, res) => {
   }
 });
 
-// GET /api/runs/:id/attendance — headline count for the given ?date=
-// occurrence (defaults to the next upcoming one), plus whether the caller
-// (if logged in) is attending. isFuture tells the client whether to render
-// the join/leave button at all — past occurrences are count-only.
-app.get('/api/runs/:id/attendance', optionalAuth, async (req, res) => {
+const ATTENDANCE_STATUSES = new Set(['in', 'cant', 'interested']);
+const MONTH_RE = /^\d{4}-\d{2}$/;
+
+// GET /api/runs/:id/attendance-status?month=YYYY-MM — the logged-in user's
+// attendance status ('in' | 'cant' | 'interested') for each occurrence date
+// of this run that falls in the given month. Powers the small status dot
+// under each date in the calendar. Logged-out callers get {} — there's
+// nothing personal to show them.
+app.get('/api/runs/:id/attendance-status', optionalAuth, async (req, res) => {
+  const runId = Number(req.params.id);
+  if (!Number.isInteger(runId)) return res.status(400).json({ error: 'Invalid run id' });
+
+  const month = String(req.query.month ?? '');
+  if (!MONTH_RE.test(month)) {
+    return res.status(400).json({ error: 'month must be in YYYY-MM format' });
+  }
+
+  if (!req.user) return res.json({});
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT to_char(occurrence_date, 'YYYY-MM-DD') AS date, status
+       FROM run_attendance
+       WHERE run_id = $1 AND user_id = $2 AND to_char(occurrence_date, 'YYYY-MM') = $3`,
+      [runId, req.user.id, month]
+    );
+
+    const statusByDate = {};
+    for (const row of rows) statusByDate[row.date] = row.status;
+    res.json(statusByDate);
+  } catch (err) {
+    console.error('Database error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/runs/:id/attendance — set the logged-in user's status for the
+// given occurrence date (body: { date, status }). Posting the same status
+// that's already set clears it back to "no selection"; posting a different
+// one switches to it. Only allowed for today/future occurrences.
+app.post('/api/runs/:id/attendance', requireAuth, async (req, res) => {
+  const runId = Number(req.params.id);
+  if (!Number.isInteger(runId)) return res.status(400).json({ error: 'Invalid run id' });
+
+  const dateParam = String(req.body?.date ?? '');
+  if (!DATE_RE.test(dateParam)) {
+    return res.status(400).json({ error: 'date must be in YYYY-MM-DD format' });
+  }
+  const status = String(req.body?.status ?? '');
+  if (!ATTENDANCE_STATUSES.has(status)) {
+    return res.status(400).json({ error: "status must be one of: 'in', 'cant', 'interested'" });
+  }
+  if (dateParam < toISODate(dateOnly(new Date()))) {
+    return res.status(400).json({ error: 'Cannot change attendance for a past run' });
+  }
+
+  try {
+    const { rows: runRows } = await pool.query('SELECT id FROM run_metadata WHERE id = $1', [runId]);
+    if (runRows.length === 0) return res.status(404).json({ error: 'Run not found' });
+
+    const { rows: existing } = await pool.query(
+      'SELECT id, status FROM run_attendance WHERE run_id = $1 AND user_id = $2 AND occurrence_date = $3',
+      [runId, req.user.id, dateParam]
+    );
+
+    let newStatus = status;
+    if (existing.length === 0) {
+      await pool.query(
+        'INSERT INTO run_attendance (run_id, user_id, occurrence_date, status) VALUES ($1, $2, $3, $4)',
+        [runId, req.user.id, dateParam, status]
+      );
+    } else if (existing[0].status === status) {
+      await pool.query('DELETE FROM run_attendance WHERE id = $1', [existing[0].id]);
+      newStatus = null;
+    } else {
+      await pool.query('UPDATE run_attendance SET status = $1 WHERE id = $2', [status, existing[0].id]);
+    }
+
+    res.json({ date: dateParam, status: newStatus });
+  } catch (err) {
+    console.error('Database error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/runs/:id/participants — everyone who picked 'in' for the given
+// ?date= occurrence (defaults to the next upcoming one), public like the old
+// attendance count. Powers the "N people going" hover list under the weather
+// widget.
+app.get('/api/runs/:id/participants', async (req, res) => {
   const runId = Number(req.params.id);
   if (!Number.isInteger(runId)) return res.status(400).json({ error: 'Invalid run id' });
 
@@ -256,69 +341,17 @@ app.get('/api/runs/:id/attendance', optionalAuth, async (req, res) => {
     if (runRows.length === 0) return res.status(404).json({ error: 'Run not found' });
 
     const date = dateParam || nextOccurrenceISO(runRows[0].weekday);
-    const isFuture = date >= toISODate(dateOnly(new Date()));
 
-    const { rows: countRows } = await pool.query(
-      'SELECT COUNT(*)::int AS count FROM run_attendance WHERE run_id = $1 AND occurrence_date = $2',
+    const { rows: participants } = await pool.query(
+      `SELECT u.id, u.name
+       FROM run_attendance ra
+       JOIN users u ON u.id = ra.user_id
+       WHERE ra.run_id = $1 AND ra.occurrence_date = $2 AND ra.status = 'in'
+       ORDER BY u.name`,
       [runId, date]
     );
 
-    let attending = false;
-    if (req.user) {
-      const { rows } = await pool.query(
-        'SELECT 1 FROM run_attendance WHERE run_id = $1 AND user_id = $2 AND occurrence_date = $3',
-        [runId, req.user.id, date]
-      );
-      attending = rows.length > 0;
-    }
-
-    res.json({ date, isFuture, count: countRows[0].count, attending });
-  } catch (err) {
-    console.error('Database error:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// POST /api/runs/:id/attendance — toggle the logged-in user's RSVP for the
-// given occurrence date (body: { date }). Only allowed for today/future
-// occurrences; the same date posted twice cancels the RSVP back off.
-app.post('/api/runs/:id/attendance', requireAuth, async (req, res) => {
-  const runId = Number(req.params.id);
-  if (!Number.isInteger(runId)) return res.status(400).json({ error: 'Invalid run id' });
-
-  const dateParam = String(req.body?.date ?? '');
-  if (!DATE_RE.test(dateParam)) {
-    return res.status(400).json({ error: 'date must be in YYYY-MM-DD format' });
-  }
-  if (dateParam < toISODate(dateOnly(new Date()))) {
-    return res.status(400).json({ error: 'Cannot change attendance for a past run' });
-  }
-
-  try {
-    const { rows: runRows } = await pool.query('SELECT id FROM run_metadata WHERE id = $1', [runId]);
-    if (runRows.length === 0) return res.status(404).json({ error: 'Run not found' });
-
-    const { rows: existing } = await pool.query(
-      'SELECT id FROM run_attendance WHERE run_id = $1 AND user_id = $2 AND occurrence_date = $3',
-      [runId, req.user.id, dateParam]
-    );
-
-    const joining = existing.length === 0;
-    if (joining) {
-      await pool.query(
-        'INSERT INTO run_attendance (run_id, user_id, occurrence_date) VALUES ($1, $2, $3)',
-        [runId, req.user.id, dateParam]
-      );
-    } else {
-      await pool.query('DELETE FROM run_attendance WHERE id = $1', [existing[0].id]);
-    }
-
-    const { rows: countRows } = await pool.query(
-      'SELECT COUNT(*)::int AS count FROM run_attendance WHERE run_id = $1 AND occurrence_date = $2',
-      [runId, dateParam]
-    );
-
-    res.json({ date: dateParam, isFuture: true, count: countRows[0].count, attending: joining });
+    res.json({ date, count: participants.length, participants });
   } catch (err) {
     console.error('Database error:', err.message);
     res.status(500).json({ error: err.message });
@@ -327,10 +360,11 @@ app.post('/api/runs/:id/attendance', requireAuth, async (req, res) => {
 
 // GET /api/runs/:id/comments — anyone can view a run's comments, newest
 // first and paginated (?limit=, ?offset=, default 50/page). Pagination only
-// counts top-level comments; each one carries its own `replies` array
-// (unpaginated — a single thread is expected to stay small) plus reaction
-// summaries on both. If a valid token is present, each comment also reports
-// the viewer's own reaction.
+// counts top-level comments; each one carries its whole reply subtree,
+// nested to any depth, as a `replies` array on each node (unpaginated — a
+// single thread is expected to stay small) plus reaction summaries
+// throughout. If a valid token is present, each comment also reports the
+// viewer's own reaction.
 // No ?date= → every comment for this run (the single discussion page).
 // With ?date= → just that occurrence's comments, for the date filter.
 app.get('/api/runs/:id/comments', optionalAuth, async (req, res) => {
@@ -357,10 +391,18 @@ app.get('/api/runs/:id/comments', optionalAuth, async (req, res) => {
     const comments = rows.slice(0, limit);
     const hasMore = rows.length > limit;
 
+    // Replies can nest to any depth now, so walk the whole subtree under each
+    // top-level comment on this page (not just its direct children) via a
+    // recursive CTE, then reassemble it into a tree below.
     const topLevelIds = comments.map((c) => c.id);
     const { rows: replies } = topLevelIds.length
       ? await pool.query(
-          `SELECT ${COMMENT_COLUMNS} ${COMMENT_JOIN} WHERE rc.parent_comment_id = ANY($1) ORDER BY rc.created_at ASC`,
+          `WITH RECURSIVE thread AS (
+             SELECT id FROM run_comments WHERE parent_comment_id = ANY($1)
+             UNION ALL
+             SELECT rc.id FROM run_comments rc JOIN thread t ON rc.parent_comment_id = t.id
+           )
+           SELECT ${COMMENT_COLUMNS} ${COMMENT_JOIN} WHERE rc.id IN (SELECT id FROM thread) ORDER BY rc.created_at ASC`,
           [topLevelIds]
         )
       : { rows: [] };
@@ -372,7 +414,11 @@ app.get('/api/runs/:id/comments', optionalAuth, async (req, res) => {
       if (!repliesByParent.has(r.parent_comment_id)) repliesByParent.set(r.parent_comment_id, []);
       repliesByParent.get(r.parent_comment_id).push(r);
     }
-    for (const c of comments) c.replies = repliesByParent.get(c.id) || [];
+    const attachReplies = (node) => {
+      node.replies = repliesByParent.get(node.id) || [];
+      node.replies.forEach(attachReplies);
+    };
+    comments.forEach(attachReplies);
 
     res.json({ comments, hasMore });
   } catch (err) {
@@ -417,27 +463,38 @@ app.post('/api/runs/:id/comments', requireAuth, async (req, res) => {
     if (!Number.isInteger(parentId)) return res.status(400).json({ error: 'Invalid parent_comment_id' });
   }
 
+  // occurrence_date: optional — used by the calendar's per-date attendance
+  // comment prompt to pin the comment to whichever date the poster was
+  // actually setting their status for. Omitted (the main composer at the
+  // bottom of the page) falls back to auto-bucketing below.
+  const rawOccurrenceDate = req.body?.occurrence_date;
+  if (rawOccurrenceDate !== undefined && !DATE_RE.test(String(rawOccurrenceDate))) {
+    return res.status(400).json({ error: 'occurrence_date must be in YYYY-MM-DD format' });
+  }
+  if (rawOccurrenceDate !== undefined && String(rawOccurrenceDate) < toISODate(dateOnly(new Date()))) {
+    return res.status(400).json({ error: 'occurrence_date cannot be in the past' });
+  }
+
   try {
     const { rows: runRows } = await pool.query('SELECT id, weekday FROM run_metadata WHERE id = $1', [runId]);
     if (runRows.length === 0) return res.status(404).json({ error: 'Run not found' });
 
     if (parentId !== null) {
       const { rows: parentRows } = await pool.query(
-        'SELECT id, run_id, parent_comment_id FROM run_comments WHERE id = $1',
+        'SELECT id, run_id FROM run_comments WHERE id = $1',
         [parentId]
       );
       if (parentRows.length === 0 || parentRows[0].run_id !== runId) {
         return res.status(400).json({ error: 'Parent comment not found for this run' });
       }
-      // Replies stay one level deep, Facebook-style: replying to a reply
-      // attaches to that reply's own top-level parent instead of nesting.
-      parentId = parentRows[0].parent_comment_id ?? parentRows[0].id;
+      // parentId is used as-is — replies nest under whichever comment (top-level
+      // or reply) the poster actually replied to, to any depth.
     }
 
-    // Which run occurrence this comment belongs to is never chosen by the
-    // poster — it's always the next occurrence on/after the moment they post,
-    // so the single discussion page buckets comments by date automatically.
-    const occurrenceDate = ceilToWeekday(runRows[0].weekday, new Date());
+    // Which run occurrence this comment belongs to is normally never chosen
+    // by the poster — it's always the next occurrence on/after the moment
+    // they post — unless occurrence_date was given explicitly.
+    const occurrenceDate = rawOccurrenceDate ? String(rawOccurrenceDate) : ceilToWeekday(runRows[0].weekday, new Date());
 
     const { rows: inserted } = await pool.query(
       'INSERT INTO run_comments (run_id, user_id, body, occurrence_date, photo_urls, voice_note_url, voice_note_duration, parent_comment_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id',
@@ -450,7 +507,7 @@ app.post('/api/runs/:id/comments', requireAuth, async (req, res) => {
     const comment = rows[0];
     comment.reactions = [];
     comment.myReaction = null;
-    if (comment.parent_comment_id === null) comment.replies = [];
+    comment.replies = []; // a reply can itself be replied to, so it needs this too
     res.status(201).json({ comment });
   } catch (err) {
     console.error('Database error:', err.message);

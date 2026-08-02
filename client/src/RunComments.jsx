@@ -22,11 +22,43 @@ const formatOccurrenceDate = (iso) =>
 
 let nextPhotoId = 0;
 
+// Recursively transforms whichever node matches `id`, anywhere in the tree.
+function mapCommentTree(comments, id, fn) {
+  return comments.map((c) => {
+    if (c.id === id) return fn(c);
+    if (c.replies?.length) return { ...c, replies: mapCommentTree(c.replies, id, fn) };
+    return c;
+  });
+}
+
+// Recursively removes the node with the given id (and, implicitly, its
+// whole reply subtree, since that subtree lives inside it).
+function removeCommentFromTree(comments, id) {
+  return comments
+    .filter((c) => c.id !== id)
+    .map((c) => (c.replies?.length ? { ...c, replies: removeCommentFromTree(c.replies, id) } : c));
+}
+
+// Recursively appends `reply` under whichever node has id === parentId.
+function addReplyToTree(comments, parentId, reply) {
+  return comments.map((c) => {
+    if (c.id === parentId) return { ...c, replies: [...(c.replies || []), reply] };
+    if (c.replies?.length) return { ...c, replies: addReplyToTree(c.replies, parentId, reply) };
+    return c;
+  });
+}
+
+// Counts every non-system comment in the tree, at any depth.
+function countComments(comments) {
+  return comments.reduce((n, c) => n + (c.is_system ? 0 : 1) + countComments(c.replies || []), 0);
+}
+
 /* ---- A single comment or reply — header, body, media, and the Facebook-
-   style reaction/reply action row underneath. Used both for top-level
-   comments and (in a more indented, text-only-composer context) replies. ---- */
+   style reaction/reply action row underneath — plus its own nested replies,
+   rendered recursively so a reply chain can go to any depth. `depth` is 0
+   for a top-level comment, 1 for a reply to it, 2 for a reply to that, etc. ---- */
 function CommentRow({
-  comment, isReply, token, user, onDelete, onOpenLightbox, activeAudioRef,
+  comment, depth, token, user, onDelete, onOpenLightbox, activeAudioRef,
   openPickerId, setOpenPickerId, onToggleReaction,
   openReplyId, setOpenReplyId, replyBody, setReplyBody, onSubmitReply, replySubmitting,
 }) {
@@ -34,8 +66,17 @@ function CommentRow({
   const pickerOpen = openPickerId === comment.id;
   const replyOpen = openReplyId === comment.id;
 
+  // One icon total: your own reaction takes priority; otherwise show
+  // whichever emoji is most popular among everyone else's, so there's
+  // still something to look at without a separate summary row.
+  const totalReactionCount = reactions.reduce((n, r) => n + r.count, 0);
+  const topReaction = reactions.length
+    ? reactions.reduce((a, b) => (b.count > a.count ? b : a))
+    : null;
+  const displayEmoji = comment.myReaction || topReaction?.emoji || null;
+
   return (
-    <div className={`comment-item${isReply ? " comment-item-reply" : ""}`}>
+    <div className={`comment-item${depth > 0 ? " comment-item-reply" : ""}`}>
       <div className="comment-item-header">
         <span className="comment-author">{comment.user_name || "Anonymous"}</span>
         <span className="comment-date">{formatDate(comment.created_at)}</span>
@@ -66,27 +107,16 @@ function CommentRow({
       )}
 
       <div className="comment-actions-row">
-        {reactions.length > 0 && (
-          <div className="comment-reaction-pills">
-            {reactions.map((r) => (
-              <button
-                key={r.emoji}
-                type="button"
-                className={`comment-reaction-pill${comment.myReaction === r.emoji ? " is-mine" : ""}`}
-                onClick={() => onToggleReaction(comment.id, r.emoji)}
-                disabled={!token}
-              >
-                {r.emoji} {r.count}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {token && (
+        {token ? (
           <div className="comment-action-links">
             <div
               className="comment-like-wrapper"
               onMouseEnter={() => setOpenPickerId(comment.id)}
+              // Selecting a reaction force-closes the picker (see toggleReaction)
+              // without the mouse actually leaving this wrapper, so no fresh
+              // mouseenter fires afterward — mousemove re-opens it as soon as
+              // the still-hovering pointer so much as twitches.
+              onMouseMove={() => setOpenPickerId(comment.id)}
               onMouseLeave={() => setOpenPickerId((id) => (id === comment.id ? null : id))}
             >
               {pickerOpen && (
@@ -97,7 +127,8 @@ function CommentRow({
                       type="button"
                       className="comment-emoji-option"
                       onClick={() => onToggleReaction(comment.id, emoji)}
-                      aria-label={`React with ${emoji}`}
+                      aria-label={`React with ${REACTION_LABELS[emoji]}`}
+                      title={REACTION_LABELS[emoji]}
                     >
                       {emoji}
                     </button>
@@ -109,13 +140,14 @@ function CommentRow({
                 type="button"
                 className={`comment-like-btn${comment.myReaction ? " is-reacted" : ""}`}
                 onClick={() => onToggleReaction(comment.id, comment.myReaction || DEFAULT_REACTION)}
+                title={comment.myReaction ? `Remove ${REACTION_LABELS[comment.myReaction]}` : "Like"}
               >
-                {comment.myReaction && comment.myReaction !== DEFAULT_REACTION ? (
-                  <span className="comment-like-emoji" aria-hidden="true">{comment.myReaction}</span>
+                {displayEmoji ? (
+                  <span className="comment-like-emoji" aria-hidden="true">{displayEmoji}</span>
                 ) : (
                   <IconThumbsUp />
                 )}
-                {REACTION_LABELS[comment.myReaction] || "Like"}
+                {totalReactionCount > 0 ? totalReactionCount : "Like"}
               </button>
             </div>
 
@@ -127,6 +159,13 @@ function CommentRow({
               Reply
             </button>
           </div>
+        ) : (
+          totalReactionCount > 0 && (
+            <span className="comment-like-summary">
+              <span className="comment-like-emoji" aria-hidden="true">{displayEmoji}</span>
+              {totalReactionCount}
+            </span>
+          )
         )}
       </div>
 
@@ -152,11 +191,37 @@ function CommentRow({
           </button>
         </form>
       )}
+
+      {comment.replies?.length > 0 && (
+        <div className="comment-replies">
+          {comment.replies.map((r) => (
+            <CommentRow
+              key={r.id}
+              comment={r}
+              depth={depth + 1}
+              token={token}
+              user={user}
+              onDelete={onDelete}
+              onOpenLightbox={onOpenLightbox}
+              activeAudioRef={activeAudioRef}
+              openPickerId={openPickerId}
+              setOpenPickerId={setOpenPickerId}
+              onToggleReaction={onToggleReaction}
+              openReplyId={openReplyId}
+              setOpenReplyId={setOpenReplyId}
+              replyBody={replyBody}
+              setReplyBody={setReplyBody}
+              onSubmitReply={onSubmitReply}
+              replySubmitting={replySubmitting}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-export default function RunComments({ runId, occurrenceDate, onPosted }) {
+export default function RunComments({ runId, occurrenceDate, onPosted, refreshKey }) {
   const { user, token } = useAuth();
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -197,9 +262,11 @@ export default function RunComments({ runId, occurrenceDate, onPosted }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runId, occurrenceDate, token]);
 
+  // refreshKey isn't read inside loadComments — it's purely a trigger bumped
+  // by the calendar's per-date comment prompt after it posts.
   useEffect(() => {
     loadComments();
-  }, [loadComments]);
+  }, [loadComments, refreshKey]);
 
   // Using the current comment count as the offset (rather than a separately
   // tracked page number) keeps this correct even if a comment was added or
@@ -347,26 +414,18 @@ export default function RunComments({ runId, occurrenceDate, onPosted }) {
     setError(null);
     try {
       await authFetch(`/api/runs/${runId}/comments/${commentId}`, token, { method: "DELETE" });
-      setComments((cs) => cs
-        .filter((c) => c.id !== commentId)
-        .map((c) => (c.replies?.some((r) => r.id === commentId)
-          ? { ...c, replies: c.replies.filter((r) => r.id !== commentId) }
-          : c)));
+      // Deleting a mid-thread reply takes its whole reply subtree with it
+      // (the server cascades this via the FK), so removal has to recurse too.
+      setComments((cs) => removeCommentFromTree(cs, commentId));
     } catch (err) {
       setError(err.message);
     }
   };
 
-  // A comment id could belong to a top-level comment or to one of its
-  // replies — this finds whichever it is and applies `updater` in place.
+  // A comment id could belong to a top-level comment or to a reply at any
+  // depth — this finds whichever it is and applies `updater` in place.
   const updateCommentById = (commentId, updater) => {
-    setComments((cs) => cs.map((c) => {
-      if (c.id === commentId) return updater(c);
-      if (c.replies?.some((r) => r.id === commentId)) {
-        return { ...c, replies: c.replies.map((r) => (r.id === commentId ? updater(r) : r)) };
-      }
-      return c;
-    }));
+    setComments((cs) => mapCommentTree(cs, commentId, updater));
   };
 
   const toggleReaction = async (commentId, emoji) => {
@@ -383,9 +442,9 @@ export default function RunComments({ runId, occurrenceDate, onPosted }) {
     }
   };
 
-  // parentId is always a specific comment's id — even for a reply, the
-  // server resolves it back to the top-level ancestor, so it's safe to
-  // always append into that top-level comment's replies here too.
+  // parentId is whichever comment's Reply button was actually clicked — a
+  // top-level comment or a reply at any depth — and the new reply nests
+  // directly under it.
   const submitReply = async (parentId) => {
     if (!replyBody.trim() || replySubmitting) return;
     setReplySubmitting(true);
@@ -396,9 +455,7 @@ export default function RunComments({ runId, occurrenceDate, onPosted }) {
         body: JSON.stringify({ body: replyBody, parent_comment_id: parentId }),
       });
       const reply = { ...data.comment, reactions: data.comment.reactions || [], myReaction: data.comment.myReaction ?? null };
-      setComments((cs) => cs.map((c) => (
-        c.id === reply.parent_comment_id ? { ...c, replies: [...(c.replies || []), reply] } : c
-      )));
+      setComments((cs) => addReplyToTree(cs, parentId, reply));
       setReplyBody("");
       setOpenReplyId(null);
     } catch (err) {
@@ -409,10 +466,7 @@ export default function RunComments({ runId, occurrenceDate, onPosted }) {
   };
 
   const busy = submitting || uploading;
-  const commentCount = comments.reduce(
-    (n, c) => n + (c.is_system ? 0 : 1) + (c.replies?.filter((r) => !r.is_system).length || 0),
-    0
-  );
+  const commentCount = countComments(comments);
 
   return (
     <div className="comments-section">
@@ -546,6 +600,7 @@ export default function RunComments({ runId, occurrenceDate, onPosted }) {
                 )}
                 <CommentRow
                   comment={c}
+                  depth={0}
                   token={token}
                   user={user}
                   onDelete={handleDelete}
@@ -561,32 +616,6 @@ export default function RunComments({ runId, occurrenceDate, onPosted }) {
                   onSubmitReply={submitReply}
                   replySubmitting={replySubmitting}
                 />
-
-                {c.replies?.length > 0 && (
-                  <div className="comment-replies">
-                    {c.replies.map((r) => (
-                      <CommentRow
-                        key={r.id}
-                        comment={r}
-                        isReply
-                        token={token}
-                        user={user}
-                        onDelete={handleDelete}
-                        onOpenLightbox={setLightbox}
-                        activeAudioRef={activeAudioRef}
-                        openPickerId={openPickerId}
-                        setOpenPickerId={setOpenPickerId}
-                        onToggleReaction={toggleReaction}
-                        openReplyId={openReplyId}
-                        setOpenReplyId={setOpenReplyId}
-                        replyBody={replyBody}
-                        setReplyBody={setReplyBody}
-                        onSubmitReply={submitReply}
-                        replySubmitting={replySubmitting}
-                      />
-                    ))}
-                  </div>
-                )}
               </li>
             );
           })}
