@@ -18,7 +18,12 @@ app.use('/api/clubs', clubsRoutes);
 // GET /api/runs — return all rows from run_metadata
 app.get('/api/runs', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM run_metadata ORDER BY 1');
+    const result = await pool.query(
+      `SELECT rm.*, c.name AS club_name, c.logo_url AS club_logo_url
+       FROM run_metadata rm
+       LEFT JOIN clubs c ON c.id = rm.club_id
+       ORDER BY 1`
+    );
     res.json({ columns: result.fields.map((f) => f.name), rows: result.rows });
   } catch (err) {
     console.error('Database error:', err.message);
@@ -33,7 +38,13 @@ app.get('/api/runs/:id', async (req, res) => {
     return res.status(400).json({ error: 'Invalid run id' });
   }
   try {
-    const result = await pool.query('SELECT * FROM run_metadata WHERE id = $1', [id]);
+    const result = await pool.query(
+      `SELECT rm.*, c.name AS club_name, c.logo_url AS club_logo_url
+       FROM run_metadata rm
+       LEFT JOIN clubs c ON c.id = rm.club_id
+       WHERE rm.id = $1`,
+      [id]
+    );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Run not found' });
     }

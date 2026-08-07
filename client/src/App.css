@@ -40,6 +40,10 @@
   gap: 10px;
   flex-shrink: 0;
   color: var(--clr-header-text);
+  background-color: #ffffff;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
 }
 
 .brand-logo {
@@ -995,6 +999,14 @@
   color: var(--clr-accent);
 }
 
+.card-subtitle-club-logo {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
 .card-map-link {
   width: fit-content;
 }
@@ -1370,6 +1382,14 @@
   max-width: 1180px;
 }
 
+/* Club detail has no sidebar column (unlike run detail), so it can use the
+   same container width as the Clubs/Runs listing pages — this keeps the
+   run cards-grid's auto-fill track count (and so each card's width) the
+   same as it is on the Runs page. */
+.club-detail-container {
+  max-width: 1280px;
+}
+
 .detail-content-grid {
   display: grid;
   grid-template-columns: 1fr 300px;
@@ -1429,6 +1449,10 @@
   border-right: 3px solid var(--clr-primary);
 }
 
+.detail-hero-badge-center {
+  align-items: center;
+}
+
 .detail-hero-day {
   font-size: 1.1rem;
   font-weight: 700;
@@ -1481,6 +1505,21 @@
 }
 
 .detail-hero-address svg {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--clr-accent);
+}
+
+.detail-hero-description {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.detail-hero-description svg {
   width: 17px;
   height: 17px;
   flex-shrink: 0;

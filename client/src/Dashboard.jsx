@@ -610,6 +610,16 @@ export default function Dashboard() {
                         <div className="card-main">
                           <div className="card-info">
                             <h3 className="card-title">{cellValue(row.meetup_location)}</h3>
+                            {row.club_name && (
+                              <Link to={`/club/${row.club_id}`} className="card-subtitle card-map-link">
+                                {row.club_logo_url ? (
+                                  <img className="card-subtitle-club-logo" src={row.club_logo_url} alt="" />
+                                ) : (
+                                  <IconUsers />
+                                )}
+                                <span>{row.club_name}</span>
+                              </Link>
+                            )}
                             {centerPoint && distanceById?.has(row.id) && (
                               <p className="card-distance-away">
                                 {formatMiles(distanceById.get(row.id))} away

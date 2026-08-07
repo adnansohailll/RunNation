@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   IconArrowLeft, IconArrowRight, IconMapPin, IconMail, IconPhone,
-  IconUsers, IconClock, IconRoute, IconTerrain,
+  IconUsers, IconClock, IconRoute, IconTerrain, IconInfo,
 } from "./icons.jsx";
 import { cellValue, errorMessage, formatTime12h } from "./utils.jsx";
 
@@ -43,7 +43,7 @@ export default function ClubDetail() {
 
   return (
     <main className="main">
-      <div className="container detail-container">
+      <div className="container detail-container club-detail-container">
         <Link to="/clubs" className="detail-back-link">
           <IconArrowLeft />
           Back to all clubs
@@ -62,7 +62,7 @@ export default function ClubDetail() {
         {!loading && !error && club && (
           <>
             <div className="detail-hero">
-              <div className="detail-hero-badge">
+              <div className="detail-hero-badge detail-hero-badge-center">
                 {club.logo_url ? (
                   <img className="club-card-logo" style={{ width: 64, height: 64 }} src={club.logo_url} alt="" />
                 ) : (
@@ -83,7 +83,10 @@ export default function ClubDetail() {
                 )}
 
                 {club.description && (
-                  <p className="club-card-description" style={{ marginTop: 10 }}>{club.description}</p>
+                  <p className="club-card-description detail-hero-description">
+                    <IconInfo />
+                    <span>{club.description}</span>
+                  </p>
                 )}
 
                 {(club.contact_email || club.contact_phone) && (
@@ -159,6 +162,13 @@ export default function ClubDetail() {
                           <span className="stat-text">
                             <span className="stat-label">Terrain</span>
                             <span className="stat-value">{cellValue(r.terrain)}</span>
+                          </span>
+                        </div>
+                        <div className="stat-row">
+                          <span className="stat-icon"><IconUsers /></span>
+                          <span className="stat-text">
+                            <span className="stat-label">Pace Groups</span>
+                            <span className="stat-value">{cellValue(r.pace_groups)}</span>
                           </span>
                         </div>
                       </div>
