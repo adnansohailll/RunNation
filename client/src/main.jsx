@@ -6,6 +6,7 @@ import App from './App.jsx'
 import Dashboard from './Dashboard.jsx'
 import RunDetail from './RunDetail.jsx'
 import Clubs from './Clubs.jsx'
+import ClubDetail from './ClubDetail.jsx'
 import Races from './Races.jsx'
 import Events from './Events.jsx'
 import Instructors from './Instructors.jsx'
@@ -30,6 +31,7 @@ createRoot(document.getElementById('root')).render(
               <Route index element={<Dashboard />} />
               <Route path="run/:id" element={<RunDetail />} />
               <Route path="clubs" element={<Clubs />} />
+              <Route path="club/:id" element={<ClubDetail />} />
               <Route path="races" element={<Races />} />
               <Route path="events" element={<Events />} />
               <Route path="instructors" element={<Instructors />} />

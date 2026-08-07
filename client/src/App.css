@@ -1134,12 +1134,11 @@
 .club-card {
   display: flex;
   flex-direction: column;
-  gap: 14px;
   background-color: var(--clr-surface);
   border: 1px solid var(--clr-border);
   border-radius: 16px;
   box-shadow: var(--shadow-sm);
-  padding: 20px 22px 22px;
+  overflow: hidden;
   transition: box-shadow var(--transition), transform var(--transition),
               background-color var(--transition), border-color var(--transition);
 }
@@ -1154,10 +1153,16 @@
   border-color: var(--clr-accent);
 }
 
+/* ---- Logo header strip (mirrors .card-day-col) ---- */
 .club-card-header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 14px 20px;
+  background-color: var(--clr-accent);
+  border-bottom: 3px solid var(--clr-primary);
+  transition: background-color var(--transition), border-color var(--transition);
 }
 
 .club-card-logo {
@@ -1181,10 +1186,19 @@
   height: 20px;
 }
 
+.club-card-header .card-title {
+  color: var(--clr-primary);
+}
+
+/* ---- Main content: info, contact, and CTA stacked (mirrors .card-main) ---- */
 .club-card-body {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  align-items: stretch;
+  gap: 14px;
+  padding: 20px 22px 22px;
+  min-width: 0;
 }
 
 .club-card-description {
@@ -1195,6 +1209,7 @@
 }
 
 .club-card-contact {
+  flex: none;
   display: flex;
   flex-direction: column;
   gap: 4px;

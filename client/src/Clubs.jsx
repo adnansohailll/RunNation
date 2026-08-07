@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { IconMapPin, IconMail, IconPhone, IconUsers } from "./icons.jsx";
+import { Link } from "react-router-dom";
+import { IconMapPin, IconMail, IconPhone, IconUsers, IconArrowRight } from "./icons.jsx";
 import { errorMessage } from "./utils.jsx";
 
 export default function Clubs() {
@@ -65,28 +66,27 @@ export default function Clubs() {
                   {club.description && (
                     <p className="club-card-description">{club.description}</p>
                   )}
-                  <div className="club-card-contact">
-                    {club.contact_email && (
-                      <a className="club-card-contact-link" href={`mailto:${club.contact_email}`}>
-                        <IconMail /> {club.contact_email}
-                      </a>
-                    )}
-                    {club.contact_phone && (
-                      <a className="club-card-contact-link" href={`tel:${club.contact_phone}`}>
-                        <IconPhone /> {club.contact_phone}
-                      </a>
-                    )}
-                  </div>
-                  {club.website && (
-                    <a
-                      className="club-card-website-btn"
-                      href={club.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Visit website
-                    </a>
+                  {(club.contact_email || club.contact_phone) && (
+                    <>
+                      <div className="card-vdivider" />
+                      <div className="club-card-contact">
+                        {club.contact_email && (
+                          <a className="club-card-contact-link" href={`mailto:${club.contact_email}`}>
+                            <IconMail /> {club.contact_email}
+                          </a>
+                        )}
+                        {club.contact_phone && (
+                          <a className="club-card-contact-link" href={`tel:${club.contact_phone}`}>
+                            <IconPhone /> {club.contact_phone}
+                          </a>
+                        )}
+                      </div>
+                    </>
                   )}
+                  <Link to={`/club/${club.id}`} className="card-details-btn">
+                    Details
+                    <IconArrowRight />
+                  </Link>
                 </div>
               </div>
             ))}
