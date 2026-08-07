@@ -57,7 +57,7 @@ export default function RunDetail() {
   return (
     <main className="main">
       <div className="container detail-container">
-        <Link to="/" className="detail-back-link">
+        <Link to="/runs" className="detail-back-link">
           <IconArrowLeft />
           Back to all runs
         </Link>

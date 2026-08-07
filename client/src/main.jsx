@@ -28,7 +28,8 @@ createRoot(document.getElementById('root')).render(
         <AuthProvider>
           <Routes>
             <Route element={<App />}>
-              <Route index element={<Dashboard />} />
+              <Route index element={<Clubs />} />
+              <Route path="runs" element={<Dashboard />} />
               <Route path="run/:id" element={<RunDetail />} />
               <Route path="clubs" element={<Clubs />} />
               <Route path="club/:id" element={<ClubDetail />} />

@@ -10,8 +10,8 @@ const navLinkClass = ({ isActive }) => `nav-link${isActive ? " active" : ""}`;
 
 const navLinks = (onNavigate) => (
   <>
-    <NavLink to="/clubs" className={navLinkClass} onClick={onNavigate}>Clubs</NavLink>
-    <NavLink to="/" end className={navLinkClass} onClick={onNavigate}>Runs</NavLink>
+    <NavLink to="/" end className={navLinkClass} onClick={onNavigate}>Clubs</NavLink>
+    <NavLink to="/runs" className={navLinkClass} onClick={onNavigate}>Runs</NavLink>
     <NavLink to="/races" className={navLinkClass} onClick={onNavigate}>Races</NavLink>
     <NavLink to="/events" className={navLinkClass} onClick={onNavigate}>Events</NavLink>
     <NavLink to="/instructors" className={navLinkClass} onClick={onNavigate}>Instructors</NavLink>
