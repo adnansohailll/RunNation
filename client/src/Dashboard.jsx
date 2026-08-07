@@ -372,7 +372,7 @@ export default function Dashboard() {
       <main className="main">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Group Runs</h2>
+            <h2 className="section-title">Runs</h2>
             {!loading && !error && (
               <span className="badge">
                 {view === "map" ? `${mapRows.length} on map` : `${listRows.length} runs`}

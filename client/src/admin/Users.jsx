@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth, authFetch } from "../auth/useAuth.js";
 import { IconSearch, IconUsers } from "../icons.jsx";
-import UserRunGroups from "./UserRunGroups.jsx";
+import UserClubs from "./UserClubs.jsx";
 import "../auth/auth.css";
 import "./admin.css";
 
@@ -60,7 +60,7 @@ export default function Users() {
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Role</th>
-                <th>Run Groups</th>
+                <th>Clubs</th>
                 <th></th>
               </tr>
             </thead>
@@ -73,15 +73,15 @@ export default function Users() {
                   <td><RoleBadge role={u.role} /></td>
                   <td>
                     <div className="admin-chip-row">
-                      {u.runGroups.map((rg) => (
-                        <span className="admin-chip admin-chip-static" key={rg.id}>{rg.name}</span>
+                      {u.clubs.map((c) => (
+                        <span className="admin-chip admin-chip-static" key={c.id}>{c.name}</span>
                       ))}
-                      {u.runGroups.length === 0 && <span className="admin-chip-empty">None</span>}
+                      {u.clubs.length === 0 && <span className="admin-chip-empty">None</span>}
                     </div>
                   </td>
                   <td className="admin-table-actions">
                     {u.role !== "super_admin" && (
-                      <button type="button" className="admin-icon-btn" onClick={() => setManagingUser(u)} aria-label="Manage run groups">
+                      <button type="button" className="admin-icon-btn" onClick={() => setManagingUser(u)} aria-label="Manage clubs">
                         <IconUsers />
                       </button>
                     )}
@@ -94,7 +94,7 @@ export default function Users() {
       )}
 
       {managingUser && (
-        <UserRunGroups
+        <UserClubs
           user={managingUser}
           onClose={() => setManagingUser(null)}
           onChange={() => loadUsers(search)}

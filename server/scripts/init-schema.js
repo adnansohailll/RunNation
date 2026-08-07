@@ -1,5 +1,5 @@
-// One-time (re-runnable) script: creates the users, run_groups, and
-// run_group_admins tables if they don't exist yet, then seeds the first
+// One-time (re-runnable) script: creates the users, clubs, and
+// club_admins tables if they don't exist yet, then seeds the first
 // super admin user from env vars.
 //
 // Usage: node scripts/init-schema.js   (run from server/, needs .env loaded)
@@ -20,14 +20,15 @@ async function main() {
     )
   `);
 
-  // Creates the new run_groups / run_group_admins tables (the "Club"
-  // naming's replacements), copies over any data still sitting in the old
-  // clubs / club_admins tables, backfills run_metadata's run_group_id from
-  // its old club_id column, then drops the old tables/column entirely.
-  // Safe to re-run: once the old tables are gone, the copy/drop steps
-  // below become no-ops (guarded by information_schema checks).
+  // Creates the clubs / club_admins tables (the "Run Group" naming's
+  // reverted back to the original "Club" terminology), copies over any data
+  // still sitting in the old run_groups / run_group_admins tables, backfills
+  // run_metadata's club_id from its old run_group_id column, then drops the
+  // old tables/column entirely. Safe to re-run: once the old tables are
+  // gone, the copy/drop steps below become no-ops (guarded by
+  // information_schema checks).
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS run_groups (
+    CREATE TABLE IF NOT EXISTS clubs (
       id             SERIAL PRIMARY KEY,
       name           TEXT NOT NULL,
       description    TEXT NOT NULL,
@@ -47,35 +48,52 @@ async function main() {
   await pool.query(`
     DO $$
     BEGIN
-      IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'clubs') THEN
-        INSERT INTO run_groups (id, name, description, location, contact_email, contact_phone, website, meetup_day, meetup_time, logo_url, created_by, created_at, updated_at)
+      IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'run_groups') THEN
+        INSERT INTO clubs (id, name, description, location, contact_email, contact_phone, website, meetup_day, meetup_time, logo_url, created_by, created_at, updated_at)
         SELECT id, name, description, location, contact_email, contact_phone, website, meetup_day, meetup_time, logo_url, created_by, created_at, updated_at
-        FROM clubs
+        FROM run_groups
         ON CONFLICT (id) DO NOTHING;
 
-        PERFORM setval(pg_get_serial_sequence('run_groups', 'id'), GREATEST((SELECT COALESCE(MAX(id), 1) FROM run_groups), 1));
+        PERFORM setval(pg_get_serial_sequence('clubs', 'id'), GREATEST((SELECT COALESCE(MAX(id), 1) FROM clubs), 1));
       END IF;
     END $$;
   `);
 
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS run_group_admins (
-      run_group_id INTEGER NOT NULL REFERENCES run_groups(id) ON DELETE CASCADE,
-      user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
-      PRIMARY KEY (run_group_id, user_id)
+    CREATE TABLE IF NOT EXISTS club_admins (
+      club_id    INTEGER NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
+      user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (club_id, user_id)
     )
   `);
 
   await pool.query(`
     DO $$
     BEGIN
-      IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'club_admins') THEN
-        INSERT INTO run_group_admins (run_group_id, user_id, created_at)
-        SELECT club_id, user_id, created_at FROM club_admins
-        ON CONFLICT (run_group_id, user_id) DO NOTHING;
+      IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'run_group_admins') THEN
+        INSERT INTO club_admins (club_id, user_id, created_at)
+        SELECT run_group_id, user_id, created_at FROM run_group_admins
+        ON CONFLICT (club_id, user_id) DO NOTHING;
       END IF;
     END $$;
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS run_metadata (
+      id                   SERIAL PRIMARY KEY,
+      weekday              TEXT NOT NULL,
+      start_times          TEXT,
+      meetup_location      TEXT NOT NULL,
+      address_intersection TEXT,
+      average_distance     TEXT,
+      terrain              TEXT,
+      pace_groups          TEXT DEFAULT 'All levels welcome',
+      latitude             DOUBLE PRECISION,
+      longitude            DOUBLE PRECISION,
+      club_id              INTEGER REFERENCES clubs(id),
+      created_at           TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
   `);
 
   await pool.query(`
@@ -83,19 +101,25 @@ async function main() {
     BEGIN
       IF EXISTS (
         SELECT 1 FROM information_schema.columns
-        WHERE table_name = 'run_metadata' AND column_name = 'club_id'
+        WHERE table_name = 'run_metadata' AND column_name = 'run_group_id'
       ) THEN
-        ALTER TABLE run_metadata ADD COLUMN IF NOT EXISTS run_group_id INTEGER REFERENCES run_groups(id);
-        UPDATE run_metadata SET run_group_id = club_id WHERE run_group_id IS NULL;
-        ALTER TABLE run_metadata DROP COLUMN club_id;
+        ALTER TABLE run_metadata ADD COLUMN IF NOT EXISTS club_id INTEGER REFERENCES clubs(id);
+        UPDATE run_metadata SET club_id = run_group_id WHERE club_id IS NULL;
+        ALTER TABLE run_metadata DROP COLUMN run_group_id;
       END IF;
     END $$;
   `);
 
   // Old data is now fully copied over — drop the child table before the
-  // parent so any leftover club_admins -> clubs foreign key doesn't block it.
-  await pool.query(`DROP TABLE IF EXISTS club_admins`);
-  await pool.query(`DROP TABLE IF EXISTS clubs`);
+  // parent so any leftover run_group_admins -> run_groups foreign key doesn't block it.
+  await pool.query(`DROP TABLE IF EXISTS run_group_admins`);
+  await pool.query(`DROP TABLE IF EXISTS run_groups`);
+
+  // The unlisted "data entry" staging forms/tables have been removed —
+  // drop the child table before the parent so its FK to run_groups_data_entry
+  // doesn't block the drop.
+  await pool.query(`DROP TABLE IF EXISTS run_metadata_data_entry`);
+  await pool.query(`DROP TABLE IF EXISTS run_groups_data_entry`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS run_comments (
@@ -107,55 +131,13 @@ async function main() {
     )
   `);
 
-  // Staging tables for the unlisted "data entry" forms: any logged-in user
-  // can submit a run group / run here without it going live. Someone
-  // reviews and moves the rows into run_groups / run_metadata later by
-  // hand — nothing here does that automatically. Column sets mirror the
-  // real tables' user-editable fields so that later move is a plain
-  // column-for-column INSERT ... SELECT.
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS run_groups_data_entry (
-      id             SERIAL PRIMARY KEY,
-      name           TEXT NOT NULL,
-      description    TEXT NOT NULL,
-      location       TEXT NOT NULL,
-      contact_email  TEXT,
-      contact_phone  TEXT,
-      website        TEXT,
-      meetup_day     TEXT,
-      meetup_time    TEXT,
-      logo_url       TEXT,
-      created_by     INTEGER REFERENCES users(id) ON DELETE SET NULL,
-      created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
-    )
-  `);
-
-  // run_group_id references run_groups_data_entry (not the live run_groups
-  // table) on purpose: the data-entry run form can only pick a group that
-  // was itself added through the data-entry run-group form.
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS run_metadata_data_entry (
-      id                   SERIAL PRIMARY KEY,
-      run_group_id         INTEGER NOT NULL REFERENCES run_groups_data_entry(id) ON DELETE CASCADE,
-      weekday              TEXT NOT NULL,
-      start_times          TEXT,
-      meetup_location      TEXT NOT NULL,
-      address_intersection TEXT,
-      average_distance     TEXT,
-      terrain              TEXT,
-      pace_groups          TEXT DEFAULT 'All levels welcome',
-      created_by           INTEGER REFERENCES users(id) ON DELETE SET NULL,
-      created_at           TIMESTAMPTZ NOT NULL DEFAULT now()
-    )
-  `);
-
   // Heals installs left over from an earlier one-to-many (admin_id) /
   // invite-by-email design, in case those tables already existed.
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT`);
   await pool.query(`ALTER TABLE users DROP COLUMN IF EXISTS invite_token`);
   await pool.query(`ALTER TABLE users DROP COLUMN IF EXISTS invite_token_expires_at`);
-  await pool.query(`ALTER TABLE run_groups DROP COLUMN IF EXISTS admin_id`);
-  await pool.query(`ALTER TABLE run_groups ALTER COLUMN contact_email DROP NOT NULL`);
+  await pool.query(`ALTER TABLE clubs DROP COLUMN IF EXISTS admin_id`);
+  await pool.query(`ALTER TABLE clubs ALTER COLUMN contact_email DROP NOT NULL`);
 
   // run_metadata.created_at: added later so existing rows can be told apart
   // from newly-added ones; backfilled to now() for any pre-existing rows.

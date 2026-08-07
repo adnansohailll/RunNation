@@ -3,8 +3,7 @@ import cors from 'cors';
 import pool from './db.js';
 import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
-import runGroupsRoutes from './routes/runGroups.js';
-import dataEntryRoutes from './routes/dataEntry.js';
+import clubsRoutes from './routes/clubs.js';
 import { requireAuth, optionalAuth } from './middleware/auth.js';
 
 const app = express();
@@ -14,8 +13,7 @@ app.use(express.json({ limit: '5mb' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
-app.use('/api/run-groups', runGroupsRoutes);
-app.use('/api/data-entry', dataEntryRoutes);
+app.use('/api/clubs', clubsRoutes);
 
 // GET /api/runs — return all rows from run_metadata
 app.get('/api/runs', async (req, res) => {

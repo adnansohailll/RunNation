@@ -17,10 +17,8 @@ import RequireRole from './auth/RequireRole.jsx'
 import Login from './auth/Login.jsx'
 import Signup from './auth/Signup.jsx'
 import AdminLayout, { AdminIndex } from './admin/AdminLayout.jsx'
-import AdminRunGroups from './admin/RunGroups.jsx'
+import AdminClubs from './admin/Clubs.jsx'
 import AdminUsers from './admin/Users.jsx'
-import RunGroupDataEntry from './dataentry/RunGroupDataEntry.jsx'
-import RunDataEntry from './dataentry/RunDataEntry.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -42,14 +40,9 @@ createRoot(document.getElementById('root')).render(
               <Route element={<RequireRole roles={['super_admin', 'admin']} />}>
                 <Route path="admin" element={<AdminLayout />}>
                   <Route index element={<AdminIndex />} />
-                  <Route path="run-groups" element={<AdminRunGroups />} />
+                  <Route path="clubs" element={<AdminClubs />} />
                   <Route path="users" element={<AdminUsers />} />
                 </Route>
-              </Route>
-              {/* Unlisted — no nav link. Permalinks only, for any logged-in user. */}
-              <Route element={<RequireRole roles={['super_admin', 'admin', 'user']} />}>
-                <Route path="data-entry/run-groups" element={<RunGroupDataEntry />} />
-                <Route path="data-entry/runs" element={<RunDataEntry />} />
               </Route>
             </Route>
           </Routes>

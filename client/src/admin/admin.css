@@ -251,7 +251,7 @@
   font-style: italic;
 }
 
-/* ---- Assign-run-group inline control ---- */
+/* ---- Assign-club inline control ---- */
 .admin-assign-row {
   display: flex;
   align-items: center;
@@ -272,7 +272,7 @@
   border-color: var(--clr-primary);
 }
 
-/* ---- Modal (run group form) ---- */
+/* ---- Modal (club form) ---- */
 .admin-modal-backdrop {
   position: fixed;
   inset: 0;

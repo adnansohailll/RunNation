@@ -7,28 +7,28 @@ import RunForm from "./RunForm.jsx";
 import "../auth/auth.css";
 import "./admin.css";
 
-export default function RunGroupDashboard() {
+export default function ClubDashboard() {
   const { user, token } = useAuth();
   const { showToast } = useToast();
-  const runGroups = user?.runGroups || [];
-  const [activeRunGroupId, setActiveRunGroupId] = useState(runGroups[0]?.id ?? null);
+  const clubs = user?.clubs || [];
+  const [activeClubId, setActiveClubId] = useState(clubs[0]?.id ?? null);
   const [stats, setStats] = useState(null);
   const [runs, setRuns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
 
-  const activeRunGroup = runGroups.find((rg) => rg.id === activeRunGroupId);
+  const activeClub = clubs.find((c) => c.id === activeClubId);
 
   const load = useCallback(() => {
-    if (!activeRunGroupId) {
+    if (!activeClubId) {
       setLoading(false);
       return;
     }
     setLoading(true);
     Promise.all([
-      authFetch(`/api/run-groups/${activeRunGroupId}/stats`, token),
-      authFetch(`/api/run-groups/${activeRunGroupId}/runs`, token),
+      authFetch(`/api/clubs/${activeClubId}/stats`, token),
+      authFetch(`/api/clubs/${activeClubId}/runs`, token),
     ])
       .then(([statsData, runsData]) => {
         setStats(statsData);
@@ -36,14 +36,14 @@ export default function RunGroupDashboard() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [activeRunGroupId, token]);
+  }, [activeClubId, token]);
 
   useEffect(() => {
     load();
   }, [load]);
 
   const handleAddRun = async (fields) => {
-    await authFetch(`/api/run-groups/${activeRunGroupId}/runs`, token, {
+    await authFetch(`/api/clubs/${activeClubId}/runs`, token, {
       method: "POST",
       body: JSON.stringify(fields),
     });
@@ -52,22 +52,22 @@ export default function RunGroupDashboard() {
     load();
   };
 
-  if (runGroups.length === 0) {
-    return <p className="status-text">You're not an admin of any run group yet.</p>;
+  if (clubs.length === 0) {
+    return <p className="status-text">You're not an admin of any club yet.</p>;
   }
 
   return (
     <div>
-      {runGroups.length > 1 && (
+      {clubs.length > 1 && (
         <nav className="admin-tabs">
-          {runGroups.map((rg) => (
+          {clubs.map((c) => (
             <button
-              key={rg.id}
+              key={c.id}
               type="button"
-              className={`admin-tab${rg.id === activeRunGroupId ? " active" : ""}`}
-              onClick={() => setActiveRunGroupId(rg.id)}
+              className={`admin-tab${c.id === activeClubId ? " active" : ""}`}
+              onClick={() => setActiveClubId(c.id)}
             >
-              {rg.name}
+              {c.name}
             </button>
           ))}
         </nav>
@@ -76,7 +76,7 @@ export default function RunGroupDashboard() {
       {error && <div className="error-box" style={{ marginBottom: 16 }}>{error}</div>}
 
       {loading ? (
-        <p className="status-text loading">Loading run group dashboard…</p>
+        <p className="status-text loading">Loading club dashboard…</p>
       ) : (
         <>
           <div className="detail-stats-grid">
@@ -93,7 +93,7 @@ export default function RunGroupDashboard() {
           </div>
 
           <div className="admin-toolbar" style={{ marginTop: 24 }}>
-            <h2 className="section-title" style={{ fontSize: "1.05rem" }}>{activeRunGroup?.name} runs</h2>
+            <h2 className="section-title" style={{ fontSize: "1.05rem" }}>{activeClub?.name} runs</h2>
             <button type="button" className="admin-btn-primary" onClick={() => setFormOpen(true)}>
               <IconPlus /> Add run
             </button>

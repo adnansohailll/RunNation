@@ -8,12 +8,12 @@ export default function Clubs() {
   const [error, setError]   = useState(null);
 
   useEffect(() => {
-    fetch("/api/run-groups")
+    fetch("/api/clubs")
       .then((res) => {
         if (!res.ok) return res.json().then((e) => Promise.reject(e.error));
         return res.json();
       })
-      .then((data) => setRows(data.runGroups))
+      .then((data) => setRows(data.clubs))
       .catch((err) => setError(errorMessage(err, "Failed to load clubs.")))
       .finally(() => setLoading(false));
   }, []);

@@ -1,5 +1,5 @@
 // One-time (safe to re-run) script: seeds ~15-20 realistic Jersey Shore
-// run groups and ~100 recurring weekly runs spread across them, with
+// clubs and ~100 recurring weekly runs spread across them, with
 // each run's created_at backdated to a random point in the past year so
 // the data doesn't look like it was all added today.
 //
@@ -41,7 +41,7 @@ const LOCATION_SUFFIXES = [
 ];
 
 // Jersey Shore towns, north to south, with approximate town-center coords.
-const RUN_GROUPS = [
+const CLUBS = [
   {
     name: 'Sea Bright Sunrise Runners',
     description: 'A friendly early-morning running group along the northern Monmouth County coastline. We welcome runners of every pace for our sunrise loops before the workday starts.',
@@ -265,22 +265,22 @@ function randomBackdatedTimestamp() {
   return new Date(now - offset);
 }
 
-function buildRunsForRunGroup(runGroup) {
-  const runCount = 3 + Math.floor(Math.random() * 4); // 3-6 runs per run group
+function buildRunsForClub(club) {
+  const runCount = 3 + Math.floor(Math.random() * 4); // 3-6 runs per club
   const runs = [];
   for (let i = 0; i < runCount; i++) {
     const weekday = pick(WEEKDAYS);
-    const townName = runGroup.location.replace(', NJ', '');
+    const townName = club.location.replace(', NJ', '');
     runs.push({
       weekday,
       start_times: randomStartTime(weekday),
       meetup_location: `${townName} ${pick(LOCATION_SUFFIXES)}`,
-      address_intersection: `${pick(STREETS)} & ${pick(STREETS)} - ${runGroup.location}`,
+      address_intersection: `${pick(STREETS)} & ${pick(STREETS)} - ${club.location}`,
       average_distance: pick(DISTANCES),
       terrain: pick(TERRAINS),
       pace_groups: pick(PACE_GROUPS),
-      latitude: jitter(runGroup.lat),
-      longitude: jitter(runGroup.lng),
+      latitude: jitter(club.lat),
+      longitude: jitter(club.lng),
       created_at: randomBackdatedTimestamp(),
     });
   }
@@ -290,9 +290,9 @@ function buildRunsForRunGroup(runGroup) {
 async function main() {
   await pool.query(`ALTER TABLE run_metadata ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now()`);
 
-  const { rows: existing } = await pool.query('SELECT id FROM run_groups WHERE name = $1', [RUN_GROUPS[0].name]);
+  const { rows: existing } = await pool.query('SELECT id FROM clubs WHERE name = $1', [CLUBS[0].name]);
   if (existing.length > 0) {
-    console.log(`"${RUN_GROUPS[0].name}" already exists — sample data looks already seeded. Skipping.`);
+    console.log(`"${CLUBS[0].name}" already exists — sample data looks already seeded. Skipping.`);
     await pool.end();
     return;
   }
@@ -302,32 +302,32 @@ async function main() {
   );
   const createdBy = admins[0]?.id ?? null;
 
-  let runGroupCount = 0;
+  let clubCount = 0;
   let runCount = 0;
 
-  for (const runGroup of RUN_GROUPS) {
+  for (const club of CLUBS) {
     const { rows } = await pool.query(
-      `INSERT INTO run_groups (name, description, location, contact_email, website, meetup_day, meetup_time, created_by)
+      `INSERT INTO clubs (name, description, location, contact_email, website, meetup_day, meetup_time, created_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id`,
-      [runGroup.name, runGroup.description, runGroup.location, runGroup.contact_email, runGroup.website, runGroup.meetup_day, runGroup.meetup_time, createdBy]
+      [club.name, club.description, club.location, club.contact_email, club.website, club.meetup_day, club.meetup_time, createdBy]
     );
-    const runGroupId = rows[0].id;
-    runGroupCount++;
+    const clubId = rows[0].id;
+    clubCount++;
 
-    const runs = buildRunsForRunGroup(runGroup);
+    const runs = buildRunsForClub(club);
     for (const run of runs) {
       await pool.query(
         `INSERT INTO run_metadata
-           (weekday, start_times, meetup_location, address_intersection, average_distance, terrain, pace_groups, latitude, longitude, run_group_id, created_at)
+           (weekday, start_times, meetup_location, address_intersection, average_distance, terrain, pace_groups, latitude, longitude, club_id, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-        [run.weekday, run.start_times, run.meetup_location, run.address_intersection, run.average_distance, run.terrain, run.pace_groups, run.latitude, run.longitude, runGroupId, run.created_at]
+        [run.weekday, run.start_times, run.meetup_location, run.address_intersection, run.average_distance, run.terrain, run.pace_groups, run.latitude, run.longitude, clubId, run.created_at]
       );
       runCount++;
     }
   }
 
-  console.log(`Seeded ${runGroupCount} run groups and ${runCount} runs.`);
+  console.log(`Seeded ${clubCount} clubs and ${runCount} runs.`);
   await pool.end();
 }
 

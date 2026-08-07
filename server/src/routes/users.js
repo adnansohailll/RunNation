@@ -5,7 +5,7 @@ import { requireAuth, requireRole } from '../middleware/auth.js';
 const router = Router();
 
 // GET /api/users?search= — super_admin only. Matches name/email/phone.
-// Returns each user plus the run groups they currently administer.
+// Returns each user plus the clubs they currently administer.
 router.get('/', requireAuth, requireRole('super_admin'), async (req, res) => {
   try {
     const search = (req.query.search || '').trim();
@@ -21,23 +21,23 @@ router.get('/', requireAuth, requireRole('super_admin'), async (req, res) => {
     if (users.length === 0) return res.json({ users: [] });
 
     const userIds = users.map((u) => u.id);
-    const { rows: runGroupRows } = await pool.query(
-      `SELECT ra.user_id, rg.id, rg.name
-       FROM run_group_admins ra
-       JOIN run_groups rg ON rg.id = ra.run_group_id
-       WHERE ra.user_id = ANY($1::int[])
-       ORDER BY rg.name ASC`,
+    const { rows: clubRows } = await pool.query(
+      `SELECT ca.user_id, c.id, c.name
+       FROM club_admins ca
+       JOIN clubs c ON c.id = ca.club_id
+       WHERE ca.user_id = ANY($1::int[])
+       ORDER BY c.name ASC`,
       [userIds]
     );
-    const runGroupsByUser = new Map();
-    for (const row of runGroupRows) {
-      const list = runGroupsByUser.get(row.user_id) || [];
+    const clubsByUser = new Map();
+    for (const row of clubRows) {
+      const list = clubsByUser.get(row.user_id) || [];
       list.push({ id: row.id, name: row.name });
-      runGroupsByUser.set(row.user_id, list);
+      clubsByUser.set(row.user_id, list);
     }
 
     res.json({
-      users: users.map((u) => ({ ...u, runGroups: runGroupsByUser.get(u.id) || [] })),
+      users: users.map((u) => ({ ...u, clubs: clubsByUser.get(u.id) || [] })),
     });
   } catch (err) {
     console.error('Database error:', err.message);
