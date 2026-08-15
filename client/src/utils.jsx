@@ -42,6 +42,28 @@ export const formatTime12h = (t) => {
   return `${hour12}:${m[2]} ${period}`;
 };
 
+/* ---- Split a 24-hour "HH:MM" start_times value into the parts a 12-hour
+   hour/minute/AM-PM picker needs. Falls back to a sensible default (7:00 AM)
+   when the value is empty or not in the expected format. ---- */
+export const to12hParts = (t) => {
+  const m = String(t ?? "").match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+  if (!m) return { hour: 7, minute: "00", period: "AM" };
+  const hour24 = Number(m[1]);
+  return {
+    hour: hour24 % 12 || 12,
+    minute: m[2],
+    period: hour24 < 12 ? "AM" : "PM",
+  };
+};
+
+/* ---- Inverse of to12hParts: hour/minute/AM-PM picker parts back into the
+   24-hour "HH:MM" string the backend and DB expect. ---- */
+export const to24hString = (hour, minute, period) => {
+  const h12 = Number(hour) % 12;
+  const hour24 = period === "PM" ? h12 + 12 : h12;
+  return `${String(hour24).padStart(2, "0")}:${minute}`;
+};
+
 /* ---- Build a Google Maps search URL for a run's location ---- */
 export const googleMapsUrl = (row) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(

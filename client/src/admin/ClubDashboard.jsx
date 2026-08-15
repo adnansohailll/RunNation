@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth, authFetch } from "../auth/useAuth.js";
 import { useToast } from "../toast/useToast.js";
-import { IconPlus, IconRoute, IconClock } from "../icons.jsx";
+import { IconPlus, IconRoute, IconClock, IconTrash } from "../icons.jsx";
 import { cellValue, formatTime12h } from "../utils.jsx";
 import RunForm from "./RunForm.jsx";
 import "../auth/auth.css";
@@ -50,6 +50,17 @@ export default function ClubDashboard() {
     showToast("Run added");
     setFormOpen(false);
     load();
+  };
+
+  const handleDeleteRun = async (run) => {
+    if (!confirm(`Delete the ${run.weekday} run at "${run.meetup_location}"? This cannot be undone.`)) return;
+    try {
+      await authFetch(`/api/clubs/${activeClubId}/runs/${run.id}`, token, { method: "DELETE" });
+      showToast("Run deleted");
+      load();
+    } catch (err) {
+      showToast(err.message, "error");
+    }
   };
 
   if (clubs.length === 0) {
@@ -111,6 +122,7 @@ export default function ClubDashboard() {
                     <th>Location</th>
                     <th>Distance</th>
                     <th>Terrain</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -121,6 +133,11 @@ export default function ClubDashboard() {
                       <td>{cellValue(r.meetup_location)}</td>
                       <td>{cellValue(r.average_distance)}</td>
                       <td>{cellValue(r.terrain)}</td>
+                      <td className="admin-table-actions">
+                        <button type="button" className="admin-icon-btn danger" onClick={() => handleDeleteRun(r)} aria-label="Delete run">
+                          <IconTrash />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

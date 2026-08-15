@@ -43,6 +43,16 @@ const formatHour12h = (isoTime) => {
   return `${hour12}:00 ${period}`;
 };
 
+/* ---- "2026-08-16" -> "Sunday, 16 Aug 2026" — day-month order fixed
+   explicitly rather than left to toLocaleDateString's locale-dependent
+   ordering (which puts the month first in, e.g., en-US). ---- */
+const formatWeatherDate = (isoDate) => {
+  const d = new Date(`${isoDate}T00:00:00`);
+  const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
+  const month = d.toLocaleDateString(undefined, { month: "short" });
+  return `${weekday}, ${d.getDate()} ${month} ${d.getFullYear()}`;
+};
+
 /* ---- Hourly forecast for a run's next occurrence (or a specific ?date=),
    windowed to 1hr before through 3hrs after the run's start time. ---- */
 export default function RunWeather({ runId, date }) {
@@ -66,7 +76,15 @@ export default function RunWeather({ runId, date }) {
 
   return (
     <div className="run-weather">
-      <h2 className="section-title" style={{ fontSize: "1.05rem" }}>Weather Forecast</h2>
+      <div className="run-weather-header">
+        <h2 className="section-title" style={{ fontSize: "1.05rem" }}>Weather Forecast</h2>
+        {!loading && !error && data?.available && (
+          <span className="run-weather-date">
+            {formatWeatherDate(data.date)}
+            {data.recorded && <span className="run-weather-recorded-tag">Recorded</span>}
+          </span>
+        )}
+      </div>
 
       {loading && <p className="status-text loading">Loading weather…</p>}
 
@@ -80,13 +98,6 @@ export default function RunWeather({ runId, date }) {
 
       {!loading && !error && data?.available && (
         <>
-          <p className="run-weather-date">
-            {new Date(`${data.date}T00:00:00`).toLocaleDateString(undefined, {
-              weekday: "long", month: "short", day: "numeric", year: "numeric",
-            })}
-            {data.recorded && <span className="run-weather-recorded-tag">Recorded</span>}
-          </p>
-
           {data.hourly.length === 0 ? (
             <p className="run-weather-empty">No forecast data for this date yet — check back closer to the run.</p>
           ) : (

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import pool from '../db.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { sendClubAdminAssignedEmail } from '../email.js';
+import { geocodeAddress } from '../geocode.js';
 
 const router = Router();
 
@@ -276,14 +277,42 @@ router.post('/:id/runs', requireAuth, requireClubAccess, async (req, res) => {
     const raw = String(req.body[f] ?? '').trim();
     return raw || RUN_FIELD_DEFAULTS[f] || null;
   });
+
+  const meetupLocation = values[RUN_ALL_FIELDS.indexOf('meetup_location')];
+  const addressIntersection = values[RUN_ALL_FIELDS.indexOf('address_intersection')];
+  const address = [meetupLocation, addressIntersection].filter(Boolean).join(', ');
+  const coords = await geocodeAddress(address);
+
   try {
+    const columns = [...RUN_ALL_FIELDS, 'club_id', 'latitude', 'longitude'];
     const { rows } = await pool.query(
-      `INSERT INTO run_metadata (${RUN_ALL_FIELDS.join(', ')}, club_id)
-       VALUES (${RUN_ALL_FIELDS.map((_, i) => `$${i + 1}`).join(', ')}, $${RUN_ALL_FIELDS.length + 1})
+      `INSERT INTO run_metadata (${columns.join(', ')})
+       VALUES (${columns.map((_, i) => `$${i + 1}`).join(', ')})
        RETURNING *`,
-      [...values, clubId]
+      [...values, clubId, coords?.lat ?? null, coords?.lng ?? null]
     );
     res.status(201).json({ run: rows[0] });
+  } catch (err) {
+    console.error('Database error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/clubs/:id/runs/:runId — super admin, or an admin of this club.
+// Cascades to that run's comments, attendance, and weather snapshots (see
+// init-schema.js's ON DELETE CASCADE on those tables' run_id).
+router.delete('/:id/runs/:runId', requireAuth, requireClubAccess, async (req, res) => {
+  const clubId = Number(req.params.id);
+  const runId = Number(req.params.runId);
+  if (!Number.isInteger(runId)) return res.status(400).json({ error: 'Invalid run id' });
+
+  try {
+    const { rows } = await pool.query(
+      'DELETE FROM run_metadata WHERE id = $1 AND club_id = $2 RETURNING id',
+      [runId, clubId]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: 'Run not found' });
+    res.status(204).end();
   } catch (err) {
     console.error('Database error:', err.message);
     res.status(500).json({ error: err.message });

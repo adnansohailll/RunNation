@@ -1382,23 +1382,11 @@
   max-width: 1180px;
 }
 
-/* Club detail has no sidebar column (unlike run detail), so it can use the
-   same container width as the Clubs/Runs listing pages — this keeps the
-   run cards-grid's auto-fill track count (and so each card's width) the
-   same as it is on the Runs page. */
+/* Matches the Clubs/Runs listing pages' width — keeps the run cards-grid's
+   auto-fill track count (and so each card's width) the same as it is on
+   the Runs page. */
 .club-detail-container {
   max-width: 1280px;
-}
-
-.detail-content-grid {
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 20px;
-  align-items: start;
-}
-
-.detail-main-col {
-  min-width: 0;
 }
 
 .detail-back-link {
@@ -1612,10 +1600,10 @@
 
 .detail-hero-meta {
   flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  align-content: center;
+  gap: 10px 24px;
   padding: 18px 20px;
   border-left: 1px solid var(--clr-border);
   transition: border-color var(--transition);
@@ -1625,6 +1613,12 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+/* Pace Groups (always last of the 3 stats) drops to its own row below
+   Distance + Terrain, spanning both columns. */
+.detail-hero-meta-item:last-child {
+  grid-column: 1 / -1;
 }
 
 .detail-hero-meta-label {
@@ -2489,9 +2483,6 @@
   }
 
   .detail-hero-meta {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: flex-start;
     gap: 12px 20px;
     padding: 14px 18px;
     border-left: none;
@@ -2533,14 +2524,19 @@
   color: var(--clr-accent);
 }
 
-.detail-side-col {
-  position: sticky;
-  top: 88px; /* clears the 64px sticky header + 24px gap */
-  align-self: start;
+/* Calendar + weather widget side by side, below the hero. The calendar
+   keeps its own natural (fit-content) width; the weather widget fills
+   whatever's left. */
+.detail-calendar-row {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 20px;
 }
 
 .run-calendar {
-  margin-top: 20px;
+  max-width: fit-content;
   background-color: var(--clr-surface);
   border: 1px solid var(--clr-border);
   border-radius: var(--radius);
@@ -2592,10 +2588,40 @@
   cursor: default;
 }
 
+/* 3 equal-width month columns side by side. Grid (not flex) is what makes
+   "equal width" actually work here: with 1fr tracks, an auto-sized grid
+   container resolves every track to the widest track's content size, so
+   a 4-date month's column matches a 5-date month's column width and its
+   dates just center within the extra room — flex:1 can't do this because
+   flex-grow has nothing to distribute once the container is content-sized. */
+.run-calendar-months {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+/* Each month: label centered above its dates. */
+.run-calendar-month-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.run-calendar-month-col-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--clr-text);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
 .run-calendar-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  justify-content: center;
+  gap: 12px;
 }
 
 .run-calendar-day {
@@ -2610,6 +2636,11 @@
   border: none;
   background: transparent;
   color: var(--clr-text-muted);
+}
+
+.run-calendar-day.is-inactive {
+  background-color: var(--clr-surface-alt);
+  border: 1px solid var(--clr-border);
 }
 
 .run-calendar-day.is-valid {
@@ -2635,6 +2666,22 @@
   box-shadow: inset 0 0 0 1.5px var(--clr-accent);
 }
 
+/* Border around the date itself for the signed-in user's attendance status
+   on that occurrence — replaces the old dot-below-the-date indicator. Uses
+   border rather than box-shadow so it coexists with .is-today's inset ring
+   above (different property, no override). */
+.run-calendar-day.has-status-in {
+  border: solid 2px #22c55e;
+}
+
+.run-calendar-day.has-status-cant {
+  border: solid 2px #ef4444;
+}
+
+.run-calendar-day.has-status-interested {
+  border: solid 2px #f5a623;
+}
+
 [data-theme="dark"] .run-calendar-day.is-valid {
   color: var(--clr-accent);
 }
@@ -2646,26 +2693,26 @@
 }
 
 .run-calendar-hint {
-  margin-top: 14px;
+  margin-top: 31px;
   font-size: 0.76rem;
   line-height: 1.5;
   color: var(--clr-text-muted);
 }
 
 .run-calendar-day-cell {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 3px;
   width: 32px;
   flex-shrink: 0;
 }
 
-.run-calendar-status-slot {
-  height: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Wraps just the date button + its hover/comment menus, so hovering the
+   interested badge below (a sibling, not a descendant, of this) never
+   triggers the attend-menu — see .run-calendar-interested-badge below. */
+.run-calendar-day-trigger {
+  position: relative;
 }
 
 .run-calendar-status-dot {
@@ -2687,9 +2734,95 @@
   background-color: #f5a623;
 }
 
+/* Buddy-icon badge under every date, showing who's going/interested (zero
+   included) — a sibling of .run-calendar-day-trigger (not nested inside it)
+   so hovering it never also opens the attend-menu. Muted when both counts
+   are zero so an empty date doesn't read the same as an active one. */
+.run-calendar-interested-badge {
+  position: relative;
+  width: 15px;
+  height: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: #f5a623;
+  color: #ffffff;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.run-calendar-interested-badge.is-empty {
+  background-color: var(--clr-surface-alt);
+  color: var(--clr-text-muted);
+  border: 1px solid var(--clr-border);
+}
+
+.run-calendar-interested-badge svg {
+  width: 9px;
+  height: 9px;
+}
+
+.run-calendar-interested-popover {
+  position: absolute;
+  top: 100%;
+  right: -8px;
+  padding-top: 6px;
+  z-index: 30;
+}
+
+/* Panel wrapping both the "going" and "interested" groups in one bordered
+   card, so the two read as one popover rather than two floating pieces. */
+.run-calendar-attendance-panel {
+  min-width: 170px;
+  max-width: 230px;
+  background-color: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.run-calendar-attendance-group + .run-calendar-attendance-group {
+  border-top: 1px solid var(--clr-border);
+}
+
+.run-calendar-attendance-heading {
+  margin: 0;
+  padding: 6px 14px 2px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--clr-text);
+  white-space: nowrap;
+}
+
+.run-calendar-interested-list {
+  list-style: none;
+  margin: 0;
+  max-height: 140px;
+  overflow-y: auto;
+  padding: 2px 0 6px;
+}
+
+.run-calendar-interested-list li {
+  padding: 4px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--clr-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.run-calendar-attendance-empty {
+  color: var(--clr-text-muted) !important;
+  font-weight: 500 !important;
+  font-style: italic;
+}
+
 .run-calendar-attend-menu {
   position: absolute;
-  top: 32px; /* pinned to the day button's height, independent of the dot slot below it */
+  top: 32px; /* pinned to the day button's height */
   left: 50%;
   transform: translateX(-50%);
   padding-top: 2px;
@@ -2831,16 +2964,18 @@
 }
 
 @media (max-width: 900px) {
-  .detail-content-grid {
-    grid-template-columns: 1fr;
+  .detail-calendar-row {
+    flex-direction: column;
   }
 
-  .detail-side-col {
-    position: static;
+  .run-weather {
+    width: 100%;
   }
 }
 
 .run-weather {
+  flex: 1 1 260px;
+  min-width: 0;
   background-color: var(--clr-surface);
   border: 1px solid var(--clr-border);
   border-radius: var(--radius);
@@ -2849,12 +2984,21 @@
   transition: background-color var(--transition), border-color var(--transition);
 }
 
+/* Heading left, date right, one line — keeps the widget's height down so it
+   roughly matches the calendar's height next to it. */
+.run-weather-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .run-weather-date {
-  margin-top: 14px;
-  margin-bottom: 12px;
+  flex-shrink: 0;
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--clr-text);
+  white-space: nowrap;
 }
 
 .run-weather-recorded-tag {
@@ -2877,6 +3021,7 @@
 }
 
 .run-weather-hours {
+  margin-top: 14px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
@@ -2929,82 +3074,6 @@
   transition: transform var(--transition);
 }
 
-.run-participants {
-  margin-top: 20px;
-  background-color: var(--clr-surface);
-  border: 1px solid var(--clr-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  padding: 20px 20px 22px;
-  transition: background-color var(--transition), border-color var(--transition);
-}
-
-.run-participants-empty {
-  margin-top: 14px;
-  font-size: 0.82rem;
-  line-height: 1.5;
-  color: var(--clr-text-muted);
-}
-
-.run-participants-count-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-top: 14px;
-}
-
-.run-participants-count-wrap.is-hoverable {
-  cursor: pointer;
-}
-
-.run-participants-count {
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: var(--clr-primary);
-}
-
-[data-theme="dark"] .run-participants-count {
-  color: var(--clr-accent);
-}
-
-.run-participants-label {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--clr-text-muted);
-}
-
-.run-participants-popover {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  padding-top: 8px;
-  z-index: 20;
-}
-
-.run-participants-list {
-  list-style: none;
-  margin: 0;
-  min-width: 180px;
-  max-width: 260px;
-  max-height: 220px;
-  overflow-y: auto;
-  background-color: var(--clr-surface);
-  border: 1px solid var(--clr-border);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-md);
-  padding: 8px 0;
-}
-
-.run-participants-list li {
-  padding: 7px 14px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--clr-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 /* ==============================================================
    RESPONSIVE

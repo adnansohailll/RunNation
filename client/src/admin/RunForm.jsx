@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { IconX } from "../icons.jsx";
 import { WEEKDAYS } from "../utils.jsx";
+import TimeSelect from "./TimeSelect.jsx";
 import "../auth/auth.css";
 import "./admin.css";
 
 const FIELDS = [
   { key: "meetup_location", label: "Meetup location", required: true },
   { key: "address_intersection", label: "Address / intersection" },
-  { key: "start_times", label: "Start time (24-hour)", type: "time" },
+  { key: "start_times", label: "Start time", type: "time", defaultValue: "07:00" },
   { key: "average_distance", label: "Distance (e.g. 3 to 5 Miles)" },
   { key: "terrain", label: "Terrain (e.g. Road, Trail)" },
   { key: "pace_groups", label: "Pace groups", defaultValue: "All levels welcome" },
@@ -68,18 +69,27 @@ export default function RunForm({ onSave, onClose }) {
 
           {FIELDS.map((f) => (
             <div className="auth-field" key={f.key}>
-              <label className="auth-label" htmlFor={`run-${f.key}`}>
+              <label className="auth-label" id={`run-${f.key}-label`} htmlFor={`run-${f.key}`}>
                 {f.label}{f.required ? " *" : ""}
               </label>
-              <input
-                id={`run-${f.key}`}
-                type={f.type || "text"}
-                className="auth-input"
-                style={{ paddingLeft: 12 }}
-                value={form[f.key]}
-                onChange={update(f.key)}
-                required={f.required}
-              />
+              {f.type === "time" ? (
+                <TimeSelect
+                  id={`run-${f.key}`}
+                  value={form[f.key]}
+                  onChange={(val) => setForm((prev) => ({ ...prev, [f.key]: val }))}
+                  required={f.required}
+                />
+              ) : (
+                <input
+                  id={`run-${f.key}`}
+                  type="text"
+                  className="auth-input"
+                  style={{ paddingLeft: 12 }}
+                  value={form[f.key]}
+                  onChange={update(f.key)}
+                  required={f.required}
+                />
+              )}
             </div>
           ))}
 

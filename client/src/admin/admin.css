@@ -333,6 +333,31 @@
   margin-top: 8px;
 }
 
+.time-select {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.time-select-part {
+  padding-left: 12px;
+  cursor: pointer;
+}
+
+.time-select-part:not(.time-select-period) {
+  flex: 1;
+  text-align: center;
+}
+
+.time-select-period {
+  flex: 1.2;
+}
+
+.time-select-colon {
+  color: var(--clr-text-muted);
+  font-weight: 700;
+}
+
 .admin-textarea {
   width: 100%;
   background-color: var(--clr-bg);

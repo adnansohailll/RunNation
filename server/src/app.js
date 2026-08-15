@@ -256,6 +256,10 @@ const MONTH_RE = /^\d{4}-\d{2}$/;
 // under each date in the calendar. Logged-out callers get {} — there's
 // nothing personal to show them.
 app.get('/api/runs/:id/attendance-status', optionalAuth, async (req, res) => {
+  // Re-requested right after every pick (see RunCalendar.jsx) — a conditional-GET
+  // 304 against a stale ETag would make a just-saved pick look unsaved.
+  res.set('Cache-Control', 'no-store');
+
   const runId = Number(req.params.id);
   if (!Number.isInteger(runId)) return res.status(400).json({ error: 'Invalid run id' });
 
@@ -332,35 +336,42 @@ app.post('/api/runs/:id/attendance', requireAuth, async (req, res) => {
   }
 });
 
-// GET /api/runs/:id/participants — everyone who picked 'in' for the given
-// ?date= occurrence (defaults to the next upcoming one), public like the old
-// attendance count. Powers the "N people going" hover list under the weather
-// widget.
-app.get('/api/runs/:id/participants', async (req, res) => {
+// GET /api/runs/:id/attendance-summary?month=YYYY-MM — everyone who picked
+// 'in' or 'interested' for any occurrence of this run in the given month,
+// public (not tied to the viewer's own login). Grouped by date, and within
+// each date by status, so the calendar's buddy-icon badge can show both
+// "N going" and "M interested" (with name lists) in one request per visible
+// month instead of one per date.
+app.get('/api/runs/:id/attendance-summary', async (req, res) => {
+  // This gets re-requested right after every attendance pick so the badge
+  // stays accurate — a conditional-GET 304 against a stale ETag would make
+  // a just-saved pick look like it never happened.
+  res.set('Cache-Control', 'no-store');
+
   const runId = Number(req.params.id);
   if (!Number.isInteger(runId)) return res.status(400).json({ error: 'Invalid run id' });
 
-  const dateParam = req.query.date;
-  if (dateParam !== undefined && !DATE_RE.test(String(dateParam))) {
-    return res.status(400).json({ error: 'date must be in YYYY-MM-DD format' });
+  const month = String(req.query.month ?? '');
+  if (!MONTH_RE.test(month)) {
+    return res.status(400).json({ error: 'month must be in YYYY-MM format' });
   }
 
   try {
-    const { rows: runRows } = await pool.query('SELECT weekday FROM run_metadata WHERE id = $1', [runId]);
-    if (runRows.length === 0) return res.status(404).json({ error: 'Run not found' });
-
-    const date = dateParam || nextOccurrenceISO(runRows[0].weekday);
-
-    const { rows: participants } = await pool.query(
-      `SELECT u.id, u.name
+    const { rows } = await pool.query(
+      `SELECT to_char(ra.occurrence_date, 'YYYY-MM-DD') AS date, ra.status, u.id, u.name
        FROM run_attendance ra
        JOIN users u ON u.id = ra.user_id
-       WHERE ra.run_id = $1 AND ra.occurrence_date = $2 AND ra.status = 'in'
+       WHERE ra.run_id = $1 AND ra.status IN ('in', 'interested') AND to_char(ra.occurrence_date, 'YYYY-MM') = $2
        ORDER BY u.name`,
-      [runId, date]
+      [runId, month]
     );
 
-    res.json({ date, count: participants.length, participants });
+    const byDate = {};
+    for (const row of rows) {
+      const entry = (byDate[row.date] ??= { in: [], interested: [] });
+      entry[row.status].push({ id: row.id, name: row.name });
+    }
+    res.json(byDate);
   } catch (err) {
     console.error('Database error:', err.message);
     res.status(500).json({ error: err.message });

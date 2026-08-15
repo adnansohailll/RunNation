@@ -5,7 +5,6 @@ import { cellValue, errorMessage, formatTime12h, googleMapsUrl } from "./utils.j
 import RunComments from "./RunComments.jsx";
 import RunCalendar from "./RunCalendar.jsx";
 import RunWeather from "./RunWeather.jsx";
-import RunParticipants from "./RunParticipants.jsx";
 
 const STATS = [
   { key: "average_distance", label: "Distance" },
@@ -23,11 +22,6 @@ export default function RunDetail() {
      single discussion page. Purely local; posting is always auto-bucketed to
      the next occurrence regardless of this filter. */
   const [filterDate, setFilterDate] = useState(null);
-
-  /* Bumped whenever the calendar's attendance dropdown changes someone's
-     status, so the read-only participants count (a separate component,
-     fetched independently) knows to refetch instead of going stale. */
-  const [attendanceVersion, setAttendanceVersion] = useState(0);
 
   /* Bumped whenever the calendar's post-selection comment prompt posts a
      comment, so the (separately fetched) comments list below picks it up. */
@@ -73,84 +67,79 @@ export default function RunDetail() {
         )}
 
         {!loading && !error && run && (
-          <div className="detail-content-grid">
-            <div className="detail-main-col">
-              <div className="detail-hero">
-                <div className="detail-hero-badge">
-                  <span className="detail-hero-day">{cellValue(run.weekday)}</span>
-                  <span className="detail-hero-time">
-                    <IconClock />
-                    {cellValue(formatTime12h(run.start_times))}
-                  </span>
-                </div>
-
-                <div className="detail-hero-body">
-                  <h1 className="detail-hero-title">{cellValue(run.meetup_location)}</h1>
-                  {run.address_intersection && (
-                    <p className="detail-hero-address">
-                      <IconMapPin />
-                      <span>{run.address_intersection}</span>
-                    </p>
-                  )}
-
-                  {run.address_intersection && (
-                    <a
-                      className="detail-directions-btn"
-                      href={googleMapsUrl(run)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <IconMapPin />
-                      Get Directions
-                    </a>
-                  )}
-                </div>
-
-                <div className="detail-hero-meta">
-                  {STATS.map(({ key, label }) => (
-                    <div key={key} className="detail-hero-meta-item">
-                      <span className="detail-hero-meta-label">{label}</span>
-                      <span className="detail-hero-meta-value">{cellValue(run[key])}</span>
-                    </div>
-                  ))}
-                </div>
+          <>
+            <div className="detail-hero">
+              <div className="detail-hero-badge">
+                <span className="detail-hero-day">{cellValue(run.weekday)}</span>
+                <span className="detail-hero-time">
+                  <IconClock />
+                  {cellValue(formatTime12h(run.start_times))}
+                </span>
               </div>
 
+              <div className="detail-hero-body">
+                <h1 className="detail-hero-title">{cellValue(run.meetup_location)}</h1>
+                {run.address_intersection && (
+                  <p className="detail-hero-address">
+                    <IconMapPin />
+                    <span>{run.address_intersection}</span>
+                  </p>
+                )}
+
+                {run.address_intersection && (
+                  <a
+                    className="detail-directions-btn"
+                    href={googleMapsUrl(run)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <IconMapPin />
+                    Get Directions
+                  </a>
+                )}
+              </div>
+
+              <div className="detail-hero-meta">
+                {STATS.map(({ key, label }) => (
+                  <div key={key} className="detail-hero-meta-item">
+                    <span className="detail-hero-meta-label">{label}</span>
+                    <span className="detail-hero-meta-value">{cellValue(run[key])}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="detail-calendar-row">
               <RunCalendar
                 runId={run.id}
                 weekday={run.weekday}
                 earliest={run.created_at}
                 selectedDate={filterDate}
                 onSelectDate={(iso) => setFilterDate((current) => (current === iso ? null : iso))}
-                onStatusChange={() => setAttendanceVersion((v) => v + 1)}
                 onCommentPosted={() => setCommentsVersion((v) => v + 1)}
               />
-
-              {filterDate && (
-                <div className="comment-scope-banner">
-                  Viewing comments for{" "}
-                  {new Date(`${filterDate}T00:00:00`).toLocaleDateString(undefined, {
-                    weekday: "long", month: "short", day: "numeric", year: "numeric",
-                  })}
-                  <button type="button" onClick={() => setFilterDate(null)}>
-                    ← Show all comments
-                  </button>
-                </div>
-              )}
-
-              <RunComments
-                runId={run.id}
-                occurrenceDate={filterDate}
-                onPosted={() => setFilterDate(null)}
-                refreshKey={commentsVersion}
-              />
-            </div>
-
-            <div className="detail-side-col">
               <RunWeather runId={run.id} date={filterDate} />
-              <RunParticipants runId={run.id} date={filterDate} refreshKey={attendanceVersion} />
             </div>
-          </div>
+
+            {filterDate && (
+              <div className="comment-scope-banner">
+                Viewing comments for{" "}
+                {new Date(`${filterDate}T00:00:00`).toLocaleDateString(undefined, {
+                  weekday: "long", month: "short", day: "numeric", year: "numeric",
+                })}
+                <button type="button" onClick={() => setFilterDate(null)}>
+                  ← Show all comments
+                </button>
+              </div>
+            )}
+
+            <RunComments
+              runId={run.id}
+              occurrenceDate={filterDate}
+              onPosted={() => setFilterDate(null)}
+              refreshKey={commentsVersion}
+            />
+          </>
         )}
       </div>
     </main>

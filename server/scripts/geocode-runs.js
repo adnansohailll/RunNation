@@ -5,22 +5,11 @@
 // Usage: node scripts/geocode-runs.js   (run from server/, needs .env loaded)
 import 'dotenv/config';
 import pool from '../src/db.js';
+import { geocodeAddress } from '../src/geocode.js';
 
-const API_KEY = process.env.GOOGLE_MAPS_API_KEY;
-if (!API_KEY) {
+if (!process.env.GOOGLE_MAPS_API_KEY) {
   console.error('GOOGLE_MAPS_API_KEY is not set in server/.env');
   process.exit(1);
-}
-
-async function geocode(address) {
-  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${API_KEY}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  if (data.status !== 'OK' || !data.results[0]) {
-    throw new Error(`Geocoding failed for "${address}": ${data.status}${data.error_message ? ` — ${data.error_message}` : ''}`);
-  }
-  const { lat, lng } = data.results[0].geometry.location;
-  return { lat, lng };
 }
 
 async function main() {
@@ -44,12 +33,12 @@ async function main() {
 
   for (const row of rows) {
     const address = [row.meetup_location, row.address_intersection].filter(Boolean).join(', ');
-    try {
-      const { lat, lng } = await geocode(address);
-      await pool.query('UPDATE run_metadata SET latitude = $1, longitude = $2 WHERE id = $3', [lat, lng, row.id]);
-      console.log(`  #${row.id} "${address}" -> ${lat}, ${lng}`);
-    } catch (err) {
-      console.error(`  #${row.id} "${address}" FAILED: ${err.message}`);
+    const coords = await geocodeAddress(address);
+    if (coords) {
+      await pool.query('UPDATE run_metadata SET latitude = $1, longitude = $2 WHERE id = $3', [coords.lat, coords.lng, row.id]);
+      console.log(`  #${row.id} "${address}" -> ${coords.lat}, ${coords.lng}`);
+    } else {
+      console.error(`  #${row.id} "${address}" FAILED`);
     }
     // Stay well under Google's rate limits for a small, infrequent batch job.
     await new Promise((r) => setTimeout(r, 200));
