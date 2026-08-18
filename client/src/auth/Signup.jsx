@@ -1,32 +1,80 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "./useAuth.js";
 import { IconUser, IconMail, IconPhone, IconLock } from "../icons.jsx";
 import authBg from "../assets/images/login-page-bg.jpg";
 import "./auth.css";
 
 export default function Signup() {
-  const { signup } = useAuth();
-  const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
+  const { signup, resendActivation } = useAuth();
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirmPassword: "" });
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  // Set to the signed-up email once signup succeeds — swaps the form out
+  // for a "check your email" confirmation instead of navigating away,
+  // since the account isn't usable until the activation link is clicked.
+  const [confirmedEmail, setConfirmedEmail] = useState(null);
+  const [resendState, setResendState] = useState("idle"); // idle | sending | sent
 
   const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
     setSubmitting(true);
     try {
-      await signup(form);
-      navigate("/", { replace: true });
+      const data = await signup(form);
+      setConfirmedEmail(data.email);
     } catch (err) {
       setError(err.message);
     } finally {
       setSubmitting(false);
     }
   };
+
+  const handleResend = async () => {
+    setResendState("sending");
+    try {
+      await resendActivation(confirmedEmail);
+    } finally {
+      setResendState("sent");
+    }
+  };
+
+  if (confirmedEmail) {
+    return (
+      <div className="auth-page" style={{ backgroundImage: `url(${authBg})` }}>
+        <div className="auth-page-overlay" />
+        <div className="container auth-wrap">
+          <div className="auth-card">
+            <h1 className="auth-title">Check your email</h1>
+            <p className="auth-subtitle">
+              We sent an activation link to <strong>{confirmedEmail}</strong>. Click it to activate your account, then log in.
+            </p>
+
+            <p className="auth-switch">
+              Didn't get it?{" "}
+              {resendState === "sent" ? (
+                "Sent again — check your inbox."
+              ) : (
+                <button type="button" className="auth-link-btn" onClick={handleResend} disabled={resendState === "sending"}>
+                  {resendState === "sending" ? "Sending…" : "Resend the email"}
+                </button>
+              )}
+            </p>
+
+            <p className="auth-switch">
+              <Link to="/login">Back to log in</Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-page" style={{ backgroundImage: `url(${authBg})` }}>
@@ -98,6 +146,27 @@ export default function Signup() {
                   onChange={update("password")}
                   required
                   minLength={8}
+                  pattern="(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}"
+                  title="At least 8 characters, including one uppercase letter, one number, and one special character"
+                  autoComplete="new-password"
+                />
+              </div>
+              <p className="auth-field-hint">
+                At least 8 characters, with one uppercase letter, one number, and one special character.
+              </p>
+            </div>
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="signup-confirm-password">Confirm password</label>
+              <div className="auth-input-wrap">
+                <IconLock />
+                <input
+                  id="signup-confirm-password"
+                  type="password"
+                  className="auth-input"
+                  value={form.confirmPassword}
+                  onChange={update("confirmPassword")}
+                  required
                   autoComplete="new-password"
                 />
               </div>

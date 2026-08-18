@@ -71,6 +71,12 @@
   color: var(--clr-text-muted);
 }
 
+.auth-field-hint {
+  margin-top: 6px;
+  font-size: 0.76rem;
+  color: var(--clr-text-muted);
+}
+
 .auth-input-wrap {
   position: relative;
   display: flex;
@@ -143,5 +149,25 @@
 }
 
 [data-theme="dark"] .auth-switch a {
+  color: var(--clr-accent);
+}
+
+.auth-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--clr-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.auth-link-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+[data-theme="dark"] .auth-link-btn {
   color: var(--clr-accent);
 }

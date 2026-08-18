@@ -17,6 +17,7 @@ import { ToastProvider } from './toast/ToastProvider.jsx'
 import RequireRole from './auth/RequireRole.jsx'
 import Login from './auth/Login.jsx'
 import Signup from './auth/Signup.jsx'
+import Activate from './auth/Activate.jsx'
 import AdminLayout, { AdminIndex } from './admin/AdminLayout.jsx'
 import AdminClubs from './admin/Clubs.jsx'
 import AdminUsers from './admin/Users.jsx'
@@ -40,6 +41,7 @@ createRoot(document.getElementById('root')).render(
               <Route path="exchange" element={<Exchange />} />
               <Route path="login" element={<Login />} />
               <Route path="signup" element={<Signup />} />
+              <Route path="activate" element={<Activate />} />
               <Route element={<RequireRole roles={['super_admin', 'admin']} />}>
                 <Route path="admin" element={<AdminLayout />}>
                   <Route index element={<AdminIndex />} />

@@ -249,6 +249,37 @@ async function main() {
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_run_comment_reactions_comment ON run_comment_reactions (comment_id)`);
 
+  // users.email_verified: gates login until the signup activation email is
+  // clicked. Existing rows backfill to true (the DEFAULT applies retroactively
+  // on ADD COLUMN) so accounts created before this feature existed aren't
+  // suddenly locked out — signup explicitly inserts false for new ones.
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT true`);
+  // activation_token stores a sha256 hash of the token emailed to the user,
+  // never the raw value — a DB read alone can't be used to activate an
+  // account. Cleared once used.
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS activation_token TEXT`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS activation_token_expires_at TIMESTAMPTZ`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_activation_token ON users (activation_token)`);
+
+  // club_join_requests: a user's request to join a club, actioned by one of
+  // that club's admins. UNIQUE(club_id, user_id) means there's ever only one
+  // row per user/club pair — a rejected request is reopened (status flipped
+  // back to 'pending', responded_* cleared) rather than inserting a new row,
+  // so re-requesting after a decline doesn't need special-casing beyond that.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS club_join_requests (
+      id           SERIAL PRIMARY KEY,
+      club_id      INTEGER NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
+      user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status       TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+      responded_at TIMESTAMPTZ,
+      responded_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      UNIQUE (club_id, user_id)
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_club_join_requests_club_status ON club_join_requests (club_id, status)`);
+
   const email = process.env.SUPER_ADMIN_EMAIL;
   const password = process.env.SUPER_ADMIN_PASSWORD;
   if (!email || !password) {

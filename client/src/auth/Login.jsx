@@ -6,17 +6,20 @@ import authBg from "../assets/images/login-page-bg.jpg";
 import "./auth.css";
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, resendActivation } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
+  const [unverified, setUnverified] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [resendState, setResendState] = useState("idle"); // idle | sending | sent
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setUnverified(false);
     setSubmitting(true);
     try {
       const user = await login(email, password);
@@ -24,8 +27,18 @@ export default function Login() {
       navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(err.message);
+      setUnverified(err.code === "EMAIL_NOT_VERIFIED");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResendState("sending");
+    try {
+      await resendActivation(email);
+    } finally {
+      setResendState("sent");
     }
   };
 
@@ -37,7 +50,23 @@ export default function Login() {
           <h1 className="auth-title">Log in</h1>
           <p className="auth-subtitle">Welcome back to RunNation.</p>
 
-          {error && <div className="error-box" style={{ marginBottom: 16 }}>{error}</div>}
+          {error && (
+            <div className="error-box" style={{ marginBottom: 16 }}>
+              {error}
+              {unverified && (
+                <>
+                  {" "}
+                  {resendState === "sent" ? (
+                    "Sent again — check your inbox."
+                  ) : (
+                    <button type="button" className="auth-link-btn" onClick={handleResend} disabled={resendState === "sending"}>
+                      {resendState === "sending" ? "Sending…" : "Resend activation email"}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div className="auth-field">

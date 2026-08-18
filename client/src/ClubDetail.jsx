@@ -2,16 +2,21 @@ import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   IconArrowLeft, IconArrowRight, IconMapPin, IconMail, IconPhone,
-  IconUsers, IconClock, IconRoute, IconTerrain, IconInfo,
+  IconUsers, IconClock, IconRoute, IconTerrain, IconInfo, IconUserPlus, IconCheckCircle,
 } from "./icons.jsx";
 import { cellValue, errorMessage, formatTime12h } from "./utils.jsx";
+import { useAuth, authFetch } from "./auth/useAuth.js";
+import { useToast } from "./toast/useToast.js";
 
 export default function ClubDetail() {
   const { id }                = useParams();
+  const { token }             = useAuth();
+  const { showToast }         = useToast();
   const [club, setClub]       = useState(null);
   const [runs, setRuns]       = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
+  const [joining, setJoining] = useState(false);
 
   /* Reset loading/error state when navigating to a different club. Adjusting
      state during render (rather than in an effect) avoids an extra re-render. */
@@ -24,7 +29,7 @@ export default function ClubDetail() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`/api/clubs/${id}`).then((res) => {
+      fetch(`/api/clubs/${id}`, token ? { headers: { Authorization: `Bearer ${token}` } } : undefined).then((res) => {
         if (!res.ok) return res.json().then((e) => Promise.reject(e.error));
         return res.json();
       }),
@@ -39,7 +44,20 @@ export default function ClubDetail() {
       })
       .catch((err) => setError(errorMessage(err, "Failed to load club.")))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, token]);
+
+  const handleJoinRequest = async () => {
+    setJoining(true);
+    try {
+      await authFetch(`/api/clubs/${id}/join-requests`, token, { method: "POST" });
+      setClub((c) => ({ ...c, myRequestStatus: "pending" }));
+      showToast("Join request sent");
+    } catch (err) {
+      showToast(err.message, "error");
+    } finally {
+      setJoining(false);
+    }
+  };
 
   return (
     <main className="main">
@@ -73,7 +91,30 @@ export default function ClubDetail() {
               </div>
 
               <div className="detail-hero-body">
-                <h1 className="detail-hero-title">{club.name}</h1>
+                <div className="detail-hero-title-row">
+                  <h1 className="detail-hero-title">{club.name}</h1>
+
+                  {!club.isMyClubAdmin && (
+                    <div className="detail-hero-join">
+                      {!token && (
+                        <Link to="/login" state={{ from: `/club/${id}` }} className="detail-directions-btn">
+                          <IconUserPlus /> Log in to join
+                        </Link>
+                      )}
+                      {token && club.myRequestStatus === "approved" && (
+                        <span className="badge"><IconCheckCircle /> Member</span>
+                      )}
+                      {token && club.myRequestStatus === "pending" && (
+                        <span className="badge badge-muted">Join request pending</span>
+                      )}
+                      {token && (club.myRequestStatus == null || club.myRequestStatus === "rejected") && (
+                        <button type="button" className="detail-directions-btn" onClick={handleJoinRequest} disabled={joining}>
+                          <IconUserPlus /> {joining ? "Requesting…" : "Request to join"}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {club.location && (
                   <p className="detail-hero-address">

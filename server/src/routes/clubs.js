@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import pool from '../db.js';
-import { requireAuth, requireRole } from '../middleware/auth.js';
-import { sendClubAdminAssignedEmail } from '../email.js';
+import { requireAuth, requireRole, optionalAuth } from '../middleware/auth.js';
+import {
+  sendClubAdminAssignedEmail, sendClubJoinRequestEmail, sendClubJoinResponseEmail, sendClubMembershipRemovedEmail,
+} from '../email.js';
 import { geocodeAddress } from '../geocode.js';
 
 const router = Router();
@@ -72,14 +74,39 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/clubs/:id
-router.get('/:id', async (req, res) => {
+// GET /api/clubs/:id — includes the caller's own join-request status
+// (myRequestStatus: 'pending' | 'approved' | 'rejected' | null) and whether
+// they administer this club (isMyClubAdmin) when logged in, so the client
+// can render the right "Join"/"Pending"/"Member"/(nothing, they run it)
+// state without a second round-trip. Anonymous callers just get null/false.
+router.get('/:id', optionalAuth, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid club id' });
   try {
     const { rows } = await pool.query('SELECT * FROM clubs WHERE id = $1', [id]);
     if (rows.length === 0) return res.status(404).json({ error: 'Club not found' });
-    res.json({ club: rows[0] });
+
+    let myRequestStatus = null;
+    let isMyClubAdmin = false;
+    if (req.user) {
+      if (req.user.role === 'super_admin') {
+        isMyClubAdmin = true;
+      } else {
+        const { rows: adminRows } = await pool.query(
+          'SELECT 1 FROM club_admins WHERE club_id = $1 AND user_id = $2',
+          [id, req.user.id]
+        );
+        isMyClubAdmin = adminRows.length > 0;
+      }
+
+      const { rows: mine } = await pool.query(
+        'SELECT status FROM club_join_requests WHERE club_id = $1 AND user_id = $2',
+        [id, req.user.id]
+      );
+      myRequestStatus = mine[0]?.status ?? null;
+    }
+
+    res.json({ club: { ...rows[0], myRequestStatus, isMyClubAdmin } });
   } catch (err) {
     console.error('Database error:', err.message);
     res.status(500).json({ error: err.message });
@@ -223,6 +250,184 @@ router.delete('/:id/admins/:userId', requireAuth, requireRole('super_admin'), as
 
     const { rows: admins } = await pool.query(ADMIN_SELECT, [clubId]);
     res.json({ admins });
+  } catch (err) {
+    console.error('Database error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const JOIN_REQUEST_SELECT = `
+  SELECT cjr.id, cjr.club_id, cjr.user_id, cjr.status, cjr.created_at, cjr.responded_at,
+         u.name AS user_name, u.email AS user_email
+  FROM club_join_requests cjr
+  JOIN users u ON u.id = cjr.user_id
+  WHERE cjr.club_id = $1
+  ORDER BY cjr.created_at DESC
+`;
+
+// POST /api/clubs/:id/join-requests — any logged-in user requests to join a
+// club. A previously rejected request is reopened to 'pending' rather than
+// inserting a second row (club_id, user_id is unique); a pending or already-
+// approved request is rejected outright since there's nothing new to do.
+router.post('/:id/join-requests', requireAuth, async (req, res) => {
+  const clubId = Number(req.params.id);
+  if (!Number.isInteger(clubId)) return res.status(400).json({ error: 'Invalid club id' });
+
+  try {
+    const { rows: clubRows } = await pool.query('SELECT id, name FROM clubs WHERE id = $1', [clubId]);
+    if (clubRows.length === 0) return res.status(404).json({ error: 'Club not found' });
+
+    if (req.user.role === 'super_admin') {
+      return res.status(400).json({ error: "You already administer this club — no need to request to join" });
+    }
+    const { rows: adminRows } = await pool.query(
+      'SELECT 1 FROM club_admins WHERE club_id = $1 AND user_id = $2',
+      [clubId, req.user.id]
+    );
+    if (adminRows.length > 0) {
+      return res.status(400).json({ error: "You already administer this club — no need to request to join" });
+    }
+
+    // The JWT payload only carries id/email/role — fetch the name fresh for
+    // the notification email below.
+    const { rows: requesterRows } = await pool.query('SELECT name, email FROM users WHERE id = $1', [req.user.id]);
+    const requester = requesterRows[0];
+
+    const { rows: existing } = await pool.query(
+      'SELECT id, status FROM club_join_requests WHERE club_id = $1 AND user_id = $2',
+      [clubId, req.user.id]
+    );
+
+    let request;
+    if (existing.length === 0) {
+      const { rows } = await pool.query(
+        `INSERT INTO club_join_requests (club_id, user_id) VALUES ($1, $2) RETURNING *`,
+        [clubId, req.user.id]
+      );
+      request = rows[0];
+    } else if (existing[0].status === 'pending') {
+      return res.status(409).json({ error: 'You already have a pending request for this club' });
+    } else if (existing[0].status === 'approved') {
+      return res.status(409).json({ error: "You're already a member of this club" });
+    } else {
+      const { rows } = await pool.query(
+        `UPDATE club_join_requests
+         SET status = 'pending', created_at = now(), responded_at = NULL, responded_by = NULL
+         WHERE id = $1
+         RETURNING *`,
+        [existing[0].id]
+      );
+      request = rows[0];
+    }
+
+    const { rows: admins } = await pool.query(ADMIN_SELECT, [clubId]);
+    for (const admin of admins) {
+      if (!admin.email) continue;
+      sendClubJoinRequestEmail({
+        to: admin.email,
+        adminName: admin.name,
+        userName: requester.name || requester.email,
+        userEmail: requester.email,
+        clubName: clubRows[0].name,
+      }).catch(() => {});
+    }
+
+    res.status(201).json({ request });
+  } catch (err) {
+    console.error('Database error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/clubs/:id/join-requests — super admin, or an admin of this club
+router.get('/:id/join-requests', requireAuth, requireClubAccess, async (req, res) => {
+  const clubId = Number(req.params.id);
+  try {
+    const { rows } = await pool.query(JOIN_REQUEST_SELECT, [clubId]);
+    res.json({ requests: rows });
+  } catch (err) {
+    console.error('Database error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/clubs/:id/join-requests/:requestId/respond { status } — super
+// admin, or an admin of this club. Only acts on a still-pending request (the
+// WHERE status = 'pending' guards against double-processing the same row).
+router.post('/:id/join-requests/:requestId/respond', requireAuth, requireClubAccess, async (req, res) => {
+  const clubId = Number(req.params.id);
+  const requestId = Number(req.params.requestId);
+  if (!Number.isInteger(requestId)) return res.status(400).json({ error: 'Invalid request id' });
+
+  const status = String(req.body?.status ?? '');
+  if (!['approved', 'rejected'].includes(status)) {
+    return res.status(400).json({ error: "status must be 'approved' or 'rejected'" });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      `UPDATE club_join_requests
+       SET status = $1, responded_at = now(), responded_by = $2
+       WHERE id = $3 AND club_id = $4 AND status = 'pending'
+       RETURNING *`,
+      [status, req.user.id, requestId, clubId]
+    );
+    if (rows.length === 0) {
+      return res.status(409).json({ error: 'This request is no longer pending' });
+    }
+
+    const [{ rows: userRows }, { rows: clubRows }] = await Promise.all([
+      pool.query('SELECT email, name FROM users WHERE id = $1', [rows[0].user_id]),
+      pool.query('SELECT name FROM clubs WHERE id = $1', [clubId]),
+    ]);
+    if (userRows[0]?.email) {
+      sendClubJoinResponseEmail({
+        to: userRows[0].email,
+        name: userRows[0].name,
+        clubName: clubRows[0]?.name ?? 'the club',
+        status,
+      }).catch(() => {});
+    }
+
+    res.json({ request: rows[0] });
+  } catch (err) {
+    console.error('Database error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/clubs/:id/members/:userId — super admin, or an admin of this
+// club. Cancels an approved member's membership at any time by deleting
+// their join-request row outright (rather than flipping it to 'rejected'),
+// so a re-request later starts clean as a brand-new pending request instead
+// of looking like a reopened rejection.
+router.delete('/:id/members/:userId', requireAuth, requireClubAccess, async (req, res) => {
+  const clubId = Number(req.params.id);
+  const userId = Number(req.params.userId);
+  if (!Number.isInteger(userId)) return res.status(400).json({ error: 'Invalid user id' });
+
+  try {
+    const { rows } = await pool.query(
+      `DELETE FROM club_join_requests WHERE club_id = $1 AND user_id = $2 AND status = 'approved' RETURNING *`,
+      [clubId, userId]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'This user is not a member of this club' });
+    }
+
+    const [{ rows: userRows }, { rows: clubRows }] = await Promise.all([
+      pool.query('SELECT email, name FROM users WHERE id = $1', [userId]),
+      pool.query('SELECT name FROM clubs WHERE id = $1', [clubId]),
+    ]);
+    if (userRows[0]?.email) {
+      sendClubMembershipRemovedEmail({
+        to: userRows[0].email,
+        name: userRows[0].name,
+        clubName: clubRows[0]?.name ?? 'the club',
+      }).catch(() => {});
+    }
+
+    res.status(204).end();
   } catch (err) {
     console.error('Database error:', err.message);
     res.status(500).json({ error: err.message });

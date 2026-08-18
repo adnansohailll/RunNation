@@ -177,6 +177,17 @@
   color: #c0392b;
 }
 
+.admin-icon-btn.success:hover {
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.admin-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+
 /* ---- Role badge ---- */
 .admin-role-badge {
   display: inline-block;
